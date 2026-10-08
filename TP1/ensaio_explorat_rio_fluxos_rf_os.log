@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.7)  8 OCT 2026 15:23
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.7)  8 OCT 2026 16:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -178,24 +178,24 @@ File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
 ) (./ensaio_explorat_rio_fluxos_rf_os.aux)
 \openout1 = `ensaio_explorat_rio_fluxos_rf_os.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 23.
-LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 19.
+LaTeX Font Info:    ... okay on input line 19.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -231,7 +231,7 @@ LaTeX Font Info:    ... okay on input line 23.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-Package hyperref Info: Link coloring OFF on input line 23.
+Package hyperref Info: Link coloring OFF on input line 19.
 (./ensaio_explorat_rio_fluxos_rf_os.out) (./ensaio_explorat_rio_fluxos_rf_os.out)
 \@outlinefile=\write3
 \openout3 = `ensaio_explorat_rio_fluxos_rf_os.out'.
@@ -256,35 +256,35 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <12> on input line 26.
+(Font)              <12> on input line 22.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <8> on input line 26.
+(Font)              <8> on input line 22.
 LaTeX Font Info:    External font `cmex10' loaded for size
-(Font)              <6> on input line 26.
+(Font)              <6> on input line 22.
  [1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 <2.png, id=45, 1606.0pt x 492.84125pt>
 File: 2.png Graphic file (type png)
 <use 2.png>
-Package pdftex.def Info: 2.png  used on input line 49.
+Package pdftex.def Info: 2.png  used on input line 45.
 (pdftex.def)             Requested size: 364.19667pt x 111.76434pt.
 
-Overfull \hbox (5.70842pt too wide) in paragraph at lines 60--61
+Overfull \hbox (5.70842pt too wide) in paragraph at lines 56--57
 []\T1/cmr/bx/n/10.95 Comportamento In-de-ter-mi-nado (36,73%): \T1/cmr/m/n/10.95 Destaca a di-fi-cul-dade in-trínseca da medição
  []
 
 <1.png, id=47, 1213.53375pt x 481.8pt>
 File: 1.png Graphic file (type png)
 <use 1.png>
-Package pdftex.def Info: 1.png  used on input line 65.
+Package pdftex.def Info: 1.png  used on input line 61.
 (pdftex.def)             Requested size: 364.19667pt x 144.59258pt.
-[2 <./2.png (PNG copy)> <./1.png>]
-Overfull \hbox (1.25002pt too wide) in paragraph at lines 77--78
+
+Overfull \hbox (1.25002pt too wide) in paragraph at lines 73--74
 []\T1/cmr/m/n/10.95 A in-ca-paci-dade de ro-tu-lar uma
  []
 
-[3] [4] (./ensaio_explorat_rio_fluxos_rf_os.aux)
+[2 <./2.png (PNG copy)>] [3 <./1.png>] [4] (./ensaio_explorat_rio_fluxos_rf_os.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-01-19>
@@ -295,15 +295,15 @@ Package rerunfilecheck Info: File `ensaio_explorat_rio_fluxos_rf_os.out' has not
 Here is how much of TeX's memory you used:
  9499 strings out of 469515
  145450 string characters out of 5470807
- 564840 words of memory out of 5000000
+ 563881 words of memory out of 5000000
  38050 multiletter control sequences out of 15000+600000
  639387 words of font info for 62 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 75i,6n,79p,786b,560s stack positions out of 10000i,1000n,20000p,200000b,200000s
- </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1728.600pk>
-Output written on ensaio_explorat_rio_fluxos_rf_os.pdf (4 pages, 212569 bytes).
+ 75i,6n,79p,786b,564s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1728.600pk>
+Output written on ensaio_explorat_rio_fluxos_rf_os.pdf (4 pages, 214602 bytes).
 PDF statistics:
- 466 PDF objects out of 1000 (max. 8388607)
+ 472 PDF objects out of 1000 (max. 8388607)
  94 compressed objects within 1 object stream
  15 named destinations out of 1000 (max. 500000)
  59 words of extra memory for PDF output out of 10000 (max. 10000000)

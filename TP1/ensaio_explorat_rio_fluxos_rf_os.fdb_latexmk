@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1791469417.1261 "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP1/ensaio_explorat_rio_fluxos_rf_os.tex" "ensaio_explorat_rio_fluxos_rf_os.pdf" "ensaio_explorat_rio_fluxos_rf_os" 1791469419.12376 0
+["pdflatex"] 1791474176.14578 "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP1/ensaio_explorat_rio_fluxos_rf_os.tex" "ensaio_explorat_rio_fluxos_rf_os.pdf" "ensaio_explorat_rio_fluxos_rf_os" 1791474178.3468 0
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk" 1791467861.77056 25396 6d8101a6a28a12a826925f983cd3472f ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk" 1791467843.95345 28952 8cbf15ea45081b603226fa2b815158b9 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk" 1791467847.14265 31928 a47053547758b05394ca279773c2e7e2 ""
@@ -10,7 +10,7 @@
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1000.600pk" 1791467936.91835 31872 27fcfaab78a0379b4c582fef157bca06 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1095.600pk" 1791467850.38385 35180 fc419201b5ec6b39eeb350fa3250ad82 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600pk" 1791469058.85486 24132 b2015909de2b01f57a4152b46f7460ca ""
-  "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP1/ensaio_explorat_rio_fluxos_rf_os.tex" 1791469414.6757 8913 046da2349896bcc9c16bb189ae418cef ""
+  "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP1/ensaio_explorat_rio_fluxos_rf_os.tex" 1791474173.86083 8944 68cc8ce643325fca36c1f95e73a6eae3 ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1000.tfm" 1775415801 3584 2d666ecf6d466d8b007246bc2f94d9da ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1095.tfm" 1775415801 3584 21b378cca2e40816b0e6d74a4dc98f04 ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1775415801 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -79,9 +79,9 @@
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1791383695 2328189 e786b77b75d9b62610f9858d2205f5b4 ""
   "1.png" 1791384088.80967 74266 44cc100c609ed8977ae5cf6e31d695d9 ""
   "2.png" 1791384101.91023 43279 7255dec85dfd6126e3ecf045c85d4a73 ""
-  "ensaio_explorat_rio_fluxos_rf_os.aux" 1791469418.85096 1502 335ec6bcf2537b7847379d7ab3023299 "pdflatex"
-  "ensaio_explorat_rio_fluxos_rf_os.out" 1791469418.85596 1193 fbeed1f7635bf5bdc3611be4307130fe "pdflatex"
-  "ensaio_explorat_rio_fluxos_rf_os.tex" 1791469414.6757 8913 046da2349896bcc9c16bb189ae418cef ""
+  "ensaio_explorat_rio_fluxos_rf_os.aux" 1791474178.11147 1502 70c82f32f2a361dd78e7bfa59aaa3052 "pdflatex"
+  "ensaio_explorat_rio_fluxos_rf_os.out" 1791474178.11347 1193 fbeed1f7635bf5bdc3611be4307130fe "pdflatex"
+  "ensaio_explorat_rio_fluxos_rf_os.tex" 1791474173.86083 8944 68cc8ce643325fca36c1f95e73a6eae3 ""
   (generated)
   "ensaio_explorat_rio_fluxos_rf_os.aux"
   "ensaio_explorat_rio_fluxos_rf_os.log"
