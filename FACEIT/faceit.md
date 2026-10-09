@@ -47,7 +47,6 @@ No contexto competitivo, o modelo de esforço intermédio (Best-Effort) da inter
 
 
 ### 3. Desafios de Rede e Infraestrutura do FACEIT
-Podes fechar a apresentação abordando os desafios que os engenheiros de redes do FACEIT enfrentam do lado da infraestrutura para garantir este QoS aos jogadores.
 
 - **Proteção DDoS vs. Latência**: Sendo uma plataforma de E-sports que move prémios monetários, os servidores do FACEIT sofrem ataques DDoS constantes. O grande desafio de QoS é aplicar mitigação de ataques (scrubbing de tráfego L3/L4) sem adicionar atraso ao tráfego legítimo de UDP. Passar o tráfego por firewalls de inspeção profunda (Deep Packet Inspection) adiciona demasiados milissegundos para um jogo competitivo.
 
