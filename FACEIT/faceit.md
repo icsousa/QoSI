@@ -2,6 +2,10 @@
 
 ## Características e Exigências do Controlo de Fluxo
 
+Ivo Costa Sousa - pg63976
+João Afonso Almeida Sousa - pg62405
+João Carlos Teixeira Neiva - pg63978
+
 ---
 
 ### 1. Perfil do Tráfego (Características)
