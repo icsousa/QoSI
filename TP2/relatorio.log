@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.7)  20 OCT 2026 14:07
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux) (preloaded format=pdflatex 2026.10.7)  20 OCT 2026 14:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -305,13 +305,13 @@ Package rerunfilecheck Info: File `relatorio.out' has not changed.
 Here is how much of TeX's memory you used:
  9631 strings out of 469515
  147021 string characters out of 5470807
- 566278 words of memory out of 5000000
+ 566288 words of memory out of 5000000
  38173 multiletter control sequences out of 15000+600000
  640780 words of font info for 65 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,10n,79p,850b,544s stack positions out of 10000i,1000n,20000p,200000b,200000s
  </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1095.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1728.600pk>
-Output written on relatorio.pdf (4 pages, 121018 bytes).
+Output written on relatorio.pdf (4 pages, 121014 bytes).
 PDF statistics:
  459 PDF objects out of 1000 (max. 8388607)
  104 compressed objects within 2 object streams

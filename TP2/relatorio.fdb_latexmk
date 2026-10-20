@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1792501621.85153 "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP2/relatorio.tex" "relatorio.pdf" "relatorio" 1792501623.57769 0
+["pdflatex"] 1792501953.2276 "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP2/relatorio.tex" "relatorio.pdf" "relatorio" 1792501954.78799 0
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk" 1791467861.77056 25396 6d8101a6a28a12a826925f983cd3472f ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1095.600pk" 1791467843.95345 28952 8cbf15ea45081b603226fa2b815158b9 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk" 1791467847.14265 31928 a47053547758b05394ca279773c2e7e2 ""
@@ -10,7 +10,7 @@
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1000.600pk" 1791467936.91835 31872 27fcfaab78a0379b4c582fef157bca06 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ecti1095.600pk" 1791467850.38385 35180 fc419201b5ec6b39eeb350fa3250ad82 ""
   "/home/ivocs/.texlive/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1200.600pk" 1791469058.85486 24132 b2015909de2b01f57a4152b46f7460ca ""
-  "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP2/relatorio.tex" 1792501619.59139 11252 13713f3c70560839f4f1ab7294231320 ""
+  "/home/ivocs/Documentos/UMinho/MEI/QoSI/TP2/relatorio.tex" 1792501952.7482 11263 53afac57c65a2b82fa749483750af09a ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1000.tfm" 1775415801 3584 2d666ecf6d466d8b007246bc2f94d9da ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1095.tfm" 1775415801 3584 21b378cca2e40816b0e6d74a4dc98f04 ""
   "/usr/share/texmf-dist/fonts/tfm/jknappen/ec/ecbx1200.tfm" 1775415801 3584 402da0b29eafbad07963b1224b222f18 ""
@@ -81,9 +81,9 @@
   "/usr/share/texmf-dist/web2c/texmf.cnf" 1775415801 43569 fd570f2fa160877d211e859f687312ba ""
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1789565771 5085451 773befd8d74fc386f1381e035d865540 ""
   "/var/lib/texmf/web2c/pdftex/pdflatex.fmt" 1791383695 2328189 e786b77b75d9b62610f9858d2205f5b4 ""
-  "relatorio.aux" 1792501623.34545 1764 329341398ef5faa6ef078c9fdc83cc3f "pdflatex"
-  "relatorio.out" 1792501623.34745 1961 7d10192182f8cf22235261577add907f "pdflatex"
-  "relatorio.tex" 1792501619.59139 11252 13713f3c70560839f4f1ab7294231320 ""
+  "relatorio.aux" 1792501954.56375 1764 329341398ef5faa6ef078c9fdc83cc3f "pdflatex"
+  "relatorio.out" 1792501954.56675 1961 7d10192182f8cf22235261577add907f "pdflatex"
+  "relatorio.tex" 1792501952.7482 11263 53afac57c65a2b82fa749483750af09a ""
   (generated)
   "relatorio.aux"
   "relatorio.log"
