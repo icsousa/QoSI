@@ -68,13 +68,13 @@ Este trabalho consolida as etapas estudadas sobre captura e análise de tráfego
 serviço de estudo o FACEIT, plataforma competitiva de partidas de CS2 que exige a execução de
 um cliente de \emph{Anti-Cheat} próprio~\cite{faceitac}. Os objetivos definidos foram:
 \begin{itemize}
-  \item \textbf{Captura global:} gerar tráfego real do serviço e capturar todo o tráfego da
+  \item \textbf{Captura global,} gerar tráfego real do serviço e capturar todo o tráfego da
         máquina com o Wireshark~\cite{wireshark}.
-  \item \textbf{Classificação e filtragem:} estudar os critérios mais eficazes, tanto em
+  \item \textbf{Classificação e filtragem,} estudar os critérios mais eficazes, tanto em
         filtros de captura como em filtros de visualização.
-  \item \textbf{Redução de volume:} quantificar a percentagem de otimização face à captura
+  \item \textbf{Redução de volume,} quantificar a percentagem de otimização face à captura
         global por filtragem, truncagem de pacotes e \emph{sampling}.
-  \item \textbf{Agregação em fluxos:} explorar ferramentas de agregação de pacotes em fluxos
+  \item \textbf{Agregação em fluxos,} explorar ferramentas de agregação de pacotes em fluxos
         a partir de ficheiros pcap.
 \end{itemize}
 
@@ -141,11 +141,11 @@ A conversa UDP \ip{192.168.1.82:50088} $\leftrightarrow$ \ip{141.95.32.214:27031
 captura (Figura~\ref{fig:conv}). Inicia-se aos 293,8~s, dura 1\,520,5~s e totaliza 202\,006
 pacotes e 159,7~MB. Os seus principais indicadores são:
 \begin{itemize}
-  \item \textbf{Cliente $\to$ servidor:} 96\,786 pacotes (70,7~MB), com média de 730~B por pacote.
-  \item \textbf{Servidor $\to$ cliente:} 105\,220 pacotes (89,0~MB), com média de 846~B por pacote.
-  \item \textbf{Débito:} praticamente constante, com cerca de 133 pacotes/s e 0,84~Mbit/s
+  \item \textbf{Cliente $\to$ servidor,} 96\,786 pacotes (70,7~MB), com média de 730~B por pacote.
+  \item \textbf{Servidor $\to$ cliente,} 105\,220 pacotes (89,0~MB), com média de 846~B por pacote.
+  \item \textbf{Débito,} praticamente constante, com cerca de 133 pacotes/s e 0,84~Mbit/s
         (aproximadamente 40\,000 pacotes por cada 300~s).
-  \item \textbf{Tamanho dos pacotes:} concentrado entre 640 e 1\,279~B (69,3\,\% dos pacotes),
+  \item \textbf{Tamanho dos pacotes,} concentrado entre 640 e 1\,279~B (69,3\,\% dos pacotes),
         com média de 790~B.
 \end{itemize}
 
@@ -214,7 +214,7 @@ pedidos entre os 225 e os 245~s, antes de o fluxo de jogo começar, e um último
 \end{figure}
 
 \subsection{Tráfego Auxiliar e Ruído}\label{sec:aux}
-\textbf{Traceroute.} Aos 293,05~s, pouco antes de o fluxo UDP começar, o cliente envia 51
+\textbf{Traceroute,} Aos 293,05~s, pouco antes de o fluxo UDP começar, o cliente envia 51
 \emph{Echo requests} ICMP para o servidor, com TTL de 1 a 17 (três sondas por TTL) e o texto
 \texttt{icmp-trace-packet} no \emph{payload}, ou seja, um \emph{traceroute}
 (Figura~\ref{fig:trace}, na Secção~\ref{sec:visao}). Recebe 26 mensagens \emph{Time-to-live exceeded} de nove \emph{routers}
@@ -429,18 +429,18 @@ tshark conversas (texto)            & 612  &     89\,824 & 99,96\,\% & UDP e TCP
 As duas ferramentas chegam a ordens de grandeza semelhantes (cerca de 65~kB a 90~kB, mais de
 99,9\,\%), mas diferem no que registam:
 \begin{itemize}
-  \item \textbf{Cobertura de protocolos:} o tshark só lista UDP e TCP (447 e 165 conversas, tal
+  \item \textbf{Cobertura de protocolos,} o tshark só lista UDP e TCP (447 e 165 conversas, tal
         como mostram os separadores das \emph{Conversations}). O Argus regista também ICMPv6,
         ARP, IGMP, ICMP e LLDP, daí os 797 fluxos (mais um registo de gestão do Argus), dos
         quais cerca de 200 não são UDP nem TCP.
-  \item \textbf{Fluxos TCP:} o Argus tem 149 fluxos TCP e o tshark 165. Na captura existem 149
+  \item \textbf{Fluxos TCP,} o Argus tem 149 fluxos TCP e o tshark 165. Na captura existem 149
         5-tuplos TCP distintos, que é o que o \texttt{racluster} agrega. A diferença de 16
         conversas vem de quatro ligações a \ip{192.168.1.166:8009} (porta tipicamente usada
         por dispositivos Google Cast na rede local) que repetem o mesmo 5-tuplo cinco vezes: o
         tshark conta cada nova tentativa de ligação como uma conversa distinta, o Argus junta-as
         num único registo ($4\times 4 = 16$). Isto significa que o Argus agrega por 5-tuplo e o
         tshark por ligação.
-  \item \textbf{Precisão dos totais:} o tshark em texto arredonda os bytes (por exemplo,
+  \item \textbf{Precisão dos totais,} o tshark em texto arredonda os bytes (por exemplo,
         159~MB para o fluxo de jogo), enquanto o Argus conserva os valores exatos.
 \end{itemize}
 
@@ -456,17 +456,17 @@ conservam ainda a evolução temporal do fluxo.
 
 \subsection{Síntese}
 \begin{itemize}
-  \item \textbf{Estrutura do serviço:} plano de jogo (UDP \ip{141.95.32.214:27031}, 79\,\% dos
+  \item \textbf{Estrutura do serviço,} plano de jogo (UDP \ip{141.95.32.214:27031}, 79\,\% dos
         bytes) e plano de controlo (DNS/TLS/QUIC para \ip{193.41.200.101/102}, 1,7\,\% dos bytes).
-  \item \textbf{Classificação:} os critérios mais eficazes para detetar o fluxo de jogo são o
+  \item \textbf{Classificação,} os critérios mais eficazes para detetar o fluxo de jogo são o
         transporte UDP, a gama de portas 27000--27050 e a dominância por volume; o DNS/SNI
         confirma o serviço. O filtro apenas por protocolo é demasiado abrangente.
-  \item \textbf{QoS do fluxo de jogo:} DSCP~0 em todos os pacotes, um pacote a cada 15,6~ms em
+  \item \textbf{QoS do fluxo de jogo,} DSCP~0 em todos os pacotes, um pacote a cada 15,6~ms em
         cada sentido com pouco desvio, e um RTT até ao servidor de cerca de 56~ms.
-  \item \textbf{Redução de volume:} a filtragem poupa pouco em bytes (21\,\%), dado que o jogo
+  \item \textbf{Redução de volume,} a filtragem poupa pouco em bytes (21\,\%), dado que o jogo
         domina a captura. As maiores poupanças resultam do \emph{snaplen} (87,5\,\%), do
         \emph{sampling} (98,9\,\% em conjunto) e da agregação em fluxos (99,5\,\% a 99,97\,\%).
-  \item \textbf{Escolha da técnica:} depende da utilização pretendida: cabeçalhos e tempos por
+  \item \textbf{Escolha da técnica,} depende da utilização pretendida: cabeçalhos e tempos por
         pacote $\Rightarrow$ filtro e \emph{snaplen} 96; estatísticas de volume $\Rightarrow$
         \emph{sampling}; contabilização e retenção prolongada $\Rightarrow$ fluxos.
 \end{itemize}
