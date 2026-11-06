@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tráfego do FACEIT</title>
+<style>
+:root{
+  --bg:#eef0f3; --paper:#ffffff; --ink:#15181d; --muted:#5b6370; --rule:#dfe3e8;
+  --accent:#e8590c; --accent-soft:#fdebe0;
+  --c-filt:#8a94a3; --c-snap:#e8590c; --c-samp:#2f7d6d; --c-flux:#3756a6;
+  --dark:#12151a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;overflow:hidden}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none}
+.slide{position:absolute;inset:0;background:var(--paper);padding:64px 80px 56px;display:none;flex-direction:column;
+  box-shadow:0 10px 40px rgba(0,0,0,.12);border-radius:6px;overflow:hidden}
+.slide.active{display:flex}
+.slide.dark{background:var(--dark);color:#f3f4f6}
+.kicker{font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+h1{font-size:60px;line-height:1.05;font-weight:750;letter-spacing:-.02em}
+h2{font-size:40px;line-height:1.12;font-weight:720;letter-spacing:-.015em;margin-bottom:30px;max-width:1080px}
+.lead{font-size:24px;line-height:1.45;color:var(--muted);max-width:980px}
+.dark .lead{color:#b6bcc6}
+p,li{font-size:23px;line-height:1.45}
+ul.clean{list-style:none}
+ul.clean li{padding-left:28px;position:relative;margin-bottom:14px}
+ul.clean li::before{content:"";position:absolute;left:0;top:13px;width:12px;height:3px;background:var(--accent)}
+.muted{color:var(--muted)}
+.mono{font-family:ui-monospace,"Cascadia Code",Consolas,Menlo,monospace}
+.grid{display:grid;gap:28px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.stat{border-top:3px solid var(--ink);padding-top:14px}
+.stat.hot{border-color:var(--accent)}
+.stat .n{font-size:50px;font-weight:760;letter-spacing:-.02em;line-height:1}
+.stat .n small{font-size:24px;font-weight:650;margin-left:4px}
+.stat .l{font-size:18px;color:var(--muted);margin-top:8px;line-height:1.35}
+.card{border:1px solid var(--rule);border-radius:10px;padding:22px 24px}
+.card h3{font-size:22px;margin-bottom:10px}
+.card p,.card li{font-size:19px;line-height:1.45}
+.tag{display:inline-block;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:4px;background:var(--accent-soft);color:#a8400a;margin-bottom:12px}
+table{border-collapse:collapse;width:100%;font-size:19px}
+th{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;font-weight:700;padding:0 12px 10px;border-bottom:2px solid var(--ink)}
+td{padding:11px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+tr.hl td{background:var(--accent-soft);font-weight:650}
+.yes{color:#1f7a4d;font-weight:700}.no{color:#b42318;font-weight:700}
+.foot{margin-top:auto;font-size:15px;color:var(--muted)}
+.cmd{background:#15181d;color:#f3f4f6;border-radius:8px;padding:18px 22px;font-size:17px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.cmd .k{color:#ffa56b}
+svg text{font-family:inherit}
+/* title slide */
+.title-wrap{margin-top:auto;margin-bottom:auto}
+.title-wrap h1{font-size:68px;max-width:1000px}
+.authors{margin-top:40px;font-size:20px;line-height:1.7;color:#b6bcc6}
+.authors b{color:#f3f4f6}
+.bar-accent{width:90px;height:6px;background:var(--accent);margin-bottom:28px}
+/* chrome */
+#progress{position:fixed;left:0;bottom:0;height:4px;background:var(--accent);transition:width .25s;z-index:5}
+#counter{position:fixed;right:18px;bottom:12px;font-size:13px;color:var(--muted);z-index:5;font-variant-numeric:tabular-nums}
+#hint{position:fixed;left:18px;bottom:12px;font-size:13px;color:var(--muted);z-index:5}
+#notes{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;width:min(1000px,92vw);max-height:40vh;overflow:auto;
+  background:rgba(18,21,26,.96);color:#f3f4f6;border-radius:10px;padding:18px 22px;font-size:17px;line-height:1.55;display:none;z-index:6}
+#notes .t{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#ffa56b;margin-bottom:6px;font-weight:700}
+#notes.show{display:block}
+.notes{display:none}
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{overflow:visible;background:#fff}
+  #viewport{position:static;display:block}
+  #stage{transform:none!important;width:1280px;height:auto}
+  .slide{display:flex!important;position:relative;width:1280px;height:720px;box-shadow:none;border-radius:0;page-break-after:always;break-after:page}
+  #progress,#counter,#hint,#notes{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<!-- 1 -->
+<section class="slide dark">
+  <div class="title-wrap">
+    <div class="bar-accent"></div>
+    <div class="kicker">Qualidade de Serviço na Internet</div>
+    <h1>Tráfego do FACEIT (CS2): captura, classificação e redução de volume</h1>
+    <div class="authors"><b>Grupo 6</b><br>Ivo Costa Sousa · João Afonso Almeida Sousa · João Carlos Teixeira Neiva</div>
+  </div>
+  <aside class="notes">Boa tarde. O nosso trabalho foi analisar o tráfego do FACEIT, a plataforma de partidas competitivas de CS2. Queríamos responder a três perguntas: o que é que o serviço manda pela rede, como o identificamos no meio do resto do tráfego, e quanto conseguimos reduzir o volume de uma captura sem perder o que interessa.</aside>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <div class="kicker">Metodologia</div>
+  <h2>Uma partida completa, capturada sem filtros, serviu de base a todos os cenários</h2>
+  <div class="grid g4" style="margin-bottom:44px">
+    <div class="stat"><div class="n">30<small>min</small></div><div class="l">de captura, com o FACEIT Anti-Cheat ativo</div></div>
+    <div class="stat"><div class="n">326<small>mil</small></div><div class="l">pacotes capturados</div></div>
+    <div class="stat"><div class="n">207<small>MB</small></div><div class="l">em pcap (baseline)</div></div>
+    <div class="stat"><div class="n">179<small>pkt/s</small></div><div class="l">em média, com 618 B por pacote</div></div>
+  </div>
+  <ul class="clean">
+    <li>Wireshark na própria máquina de jogo, ligada por cabo, com pacotes inteiros.</li>
+    <li>Todos os cenários reduzidos foram derivados <b>offline</b> do mesmo ficheiro, para comparar sempre o mesmo tráfego.</li>
+    <li>Ferramentas: Wireshark/tshark, editcap, tcpdump, capinfos e Argus.</li>
+  </ul>
+  <aside class="notes">Jogámos uma partida inteira, cerca de 30 minutos, com o Wireshark a capturar tudo na própria máquina, por cabo, sem filtro e com o anti-cheat ligado. Ficámos com 326 mil pacotes e cerca de 207 MB. A decisão importante foi fazer uma única captura global e tirar dela todos os outros cenários offline. Assim, quando comparamos reduções, estamos sempre a falar exatamente do mesmo tráfego.</aside>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <div class="kicker">Caracterização</div>
+  <h2>O servidor de jogo representa 79&nbsp;% dos bytes; o FACEIT em si, menos de 2&nbsp;%</h2>
+  <svg id="chart-comp" viewBox="0 0 1120 330" width="1120" height="330" role="img" aria-label="Composição do tráfego por classe, em percentagem dos bytes"></svg>
+  <div class="foot">As classes sobrepõem-se parcialmente e não devem ser somadas. Percentagem dos bytes da captura global.</div>
+  <aside class="notes">Quando olhamos para a composição, um único destino domina: o servidor de jogo, com 79 por cento dos bytes. Em segundo lugar aparece um fluxo UDP para a porta 19336 que já existia na captura de ensaio, fora do jogo, por isso tratámo-lo como ruído. O resto é TCP, QUIC e tráfego da rede local. O controlo do FACEIT propriamente dito, o site, o chat e o anti-cheat, é menos de 2 por cento.</aside>
+</section>
+
+<!-- 4 -->
+<section class="slide">
+  <div class="kicker">Plano de jogo</div>
+  <h2>Um único fluxo UDP, estável durante toda a partida</h2>
+  <p class="mono" style="font-size:24px;margin-bottom:34px">192.168.1.82:50088 &nbsp;↔&nbsp; 141.95.32.214:27031</p>
+  <div class="grid g4" style="margin-bottom:40px">
+    <div class="stat hot"><div class="n">202<small>mil</small></div><div class="l">pacotes (159,7 MB)</div></div>
+    <div class="stat"><div class="n">1&nbsp;520<small>s</small></div><div class="l">de duração, a partir dos 294 s</div></div>
+    <div class="stat"><div class="n">0,84<small>Mbit/s</small></div><div class="l">quase constante, ~133 pacotes/s</div></div>
+    <div class="stat"><div class="n">790<small>B</small></div><div class="l">por pacote em média; 69 % entre 640 e 1 279 B</div></div>
+  </div>
+  <div class="grid g2">
+    <div class="card"><h3>Cliente → servidor</h3><p>96 786 pacotes · 70,7 MB · 730 B de média</p></div>
+    <div class="card"><h3>Servidor → cliente</h3><p>105 220 pacotes · 89,0 MB · 846 B de média</p></div>
+  </div>
+  <aside class="notes">O jogo é uma única conversa UDP entre a nossa máquina e o servidor, na porta 27031. São 202 mil pacotes e quase 160 MB em 25 minutos de partida. O débito é baixo e praticamente constante, menos de 1 Mbit/s, e o servidor manda um pouco mais do que recebe, porque envia o estado de todos os jogadores.</aside>
+</section>
+
+<!-- 5 -->
+<section class="slide">
+  <div class="kicker">QoS do fluxo de jogo</div>
+  <h2>Muito regular, sensível à latência e sem qualquer marcação de QoS</h2>
+  <div class="grid g3" style="margin-bottom:38px">
+    <div class="stat hot"><div class="n">DSCP 0</div><div class="l">em todos os pacotes, nos dois sentidos: best effort</div></div>
+    <div class="stat"><div class="n">15,6<small>ms</small></div><div class="l">entre pacotes (mediana), ~64 pacotes/s por sentido</div></div>
+    <div class="stat"><div class="n">≈56<small>ms</small></div><div class="l">de RTT até ao servidor, a partir de um traceroute</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Tempo entre pacotes</th><th class="num">Mediana</th><th class="num">p95</th><th class="num">p99</th><th class="num">Máximo</th><th class="num">Jitter (desvio-padrão)</th></tr></thead>
+    <tbody>
+      <tr><td>Servidor → cliente</td><td class="num">15,60 ms</td><td class="num">16,05 ms</td><td class="num">16,52 ms</td><td class="num">1 000,4 ms</td><td class="num">7,58 ms</td></tr>
+      <tr><td>Cliente → servidor</td><td class="num">15,64 ms</td><td class="num">16,65 ms</td><td class="num">17,11 ms</td><td class="num">518,6 ms</td><td class="num">4,02 ms</td></tr>
+    </tbody>
+  </table>
+  <aside class="notes">Do ponto de vista de QoS, três coisas. Primeiro, o tráfego não tem marcação DSCP, vai tudo como best effort. Segundo, é extremamente regular: um pacote a cada 15,6 ms, e o percentil 99 fica a menos de 2 ms da mediana. Os máximos de 1 segundo e meio segundo são interrupções isoladas. Terceiro, o RTT até ao servidor anda nos 56 ms. É um fluxo de débito baixo mas muito sensível à latência e ao jitter, exatamente o tipo de tráfego que beneficiaria de prioridade.</aside>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <div class="kicker">Plano de controlo e tráfego auxiliar</div>
+  <h2>O DNS e o SNI confirmam o serviço; um traceroute revela o caminho até ao servidor</h2>
+  <div class="grid g2" style="align-items:start">
+    <div class="card">
+      <span class="tag">Plano de controlo · 1,7 % dos bytes</span>
+      <ul class="clean" style="margin-top:6px">
+        <li style="font-size:19px">DNS, TLS e QUIC para <span class="mono">193.41.200.101/102</span></li>
+        <li style="font-size:19px">Nomes: www, edge, chat, cdn e <span class="mono">ac-client-ws.faceit.com</span></li>
+        <li style="font-size:19px">Rajada de pedidos aos 225–245 s, antes de o jogo começar</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="tag">Traceroute · 80 pacotes ICMP</span>
+      <svg id="chart-rtt" viewBox="0 0 500 200" width="100%" role="img" aria-label="RTT por salto até ao servidor"></svg>
+      <p class="muted" style="font-size:15px;margin-top:6px">Valor indicativo: os routers geram ICMP com baixa prioridade.</p>
+    </div>
+  </div>
+  <aside class="notes">O controlo do FACEIT é pequeno, 4 mil pacotes, mas é ele que identifica o serviço: os nomes faceit.com aparecem no DNS e no SNI do TLS e do QUIC, todos para dois IPs. Encontrámos ainda 80 pacotes ICMP com o IP do servidor: eram um traceroute feito pouco antes da partida, provavelmente pelo cliente do jogo. Daí tirámos o RTT por salto: menos de 1 ms no router de casa e cerca de 56 ms até ao servidor, com o salto grande a meio do caminho.</aside>
+</section>
+
+<!-- 7 -->
+<section class="slide">
+  <div class="kicker">Classificação e filtragem</div>
+  <h2>A gama de portas apanha todo o jogo sem depender do IP do servidor</h2>
+  <table style="margin-bottom:26px">
+    <thead><tr><th>Critério</th><th>Filtro de captura (BPF)</th><th class="num">Pacotes</th><th class="num">Precisão</th></tr></thead>
+    <tbody>
+      <tr><td>IP do servidor</td><td class="mono" style="font-size:17px">udp and host 141.95.32.214</td><td class="num">202 006</td><td class="num">100 %</td></tr>
+      <tr class="hl"><td>Gama de portas</td><td class="mono" style="font-size:17px">udp portrange 27000-27050</td><td class="num">202 040</td><td class="num">99,98 %</td></tr>
+      <tr><td>Qualquer protocolo com o IP</td><td class="mono" style="font-size:17px">host 141.95.32.214</td><td class="num">202 060</td><td class="num">99,97 %</td></tr>
+      <tr><td>Só UDP</td><td class="mono" style="font-size:17px">udp</td><td class="num">300 571</td><td class="num">67,2 %</td></tr>
+    </tbody>
+  </table>
+  <ul class="clean">
+    <li>Todos os filtros por IP ou portas apanham <b>100 %</b> do jogo; só UDP traz 33 % de lixo.</li>
+    <li>Nomes (DNS/SNI) só servem como filtro de visualização: o BPF vê apenas cabeçalhos.</li>
+  </ul>
+  <aside class="notes">Para isolar o jogo testámos vários filtros. Por IP ou por portas, todos apanham 100 por cento do fluxo. A gama de portas 27000 a 27050 só traz 34 pacotes a mais e tem uma grande vantagem: não precisa de saber o IP do servidor, que muda em cada partida. Filtrar apenas por UDP não serve, porque um terço do que apanha não é jogo. E os nomes só se podem usar como filtro de visualização, porque o filtro de captura só vê cabeçalhos.</aside>
+</section>
+
+<!-- 8 -->
+<section class="slide">
+  <div class="kicker">Redução de volume</div>
+  <h2>Filtrar poupa pouco; truncar, amostrar e agregar poupam quase tudo</h2>
+  <svg id="chart-red" viewBox="0 0 1120 470" width="1120" height="470" role="img" aria-label="Redução de bytes por cenário face à captura global"></svg>
+  <aside class="notes">Esta é a parte central. Filtrar só o jogo reduz apenas 21 por cento dos bytes, porque o jogo já era 79 por cento da captura. O ruído são muitos pacotes, mas pequenos. A técnica com maior impacto individual é a truncagem: guardando os primeiros 96 bytes de cada pacote, que chegam para os cabeçalhos, passamos para 87,5 por cento. Juntando sampling de 1 em 10 chegamos a 99 por cento, e a agregação em fluxos ultrapassa os 99,9: 207 MB passam a 65 kB.</aside>
+</section>
+
+<!-- 9 -->
+<section class="slide">
+  <div class="kicker">Impacto nas métricas de QoS</div>
+  <h2>A técnica escolhe-se pelo que é preciso medir depois</h2>
+  <table>
+    <thead><tr><th>Técnica</th><th class="num">Redução</th><th>Tempos por pacote e jitter</th><th>DSCP</th><th>Volumes</th><th>Payload</th></tr></thead>
+    <tbody>
+      <tr><td>Filtro</td><td class="num">21 %</td><td class="yes">Sim</td><td class="yes">Sim</td><td class="yes">Sim</td><td class="yes">Sim</td></tr>
+      <tr class="hl"><td>Filtro + snaplen 96</td><td class="num">87,5 %</td><td class="yes">Sim</td><td class="yes">Sim</td><td class="yes">Sim</td><td class="no">Não</td></tr>
+      <tr><td>+ Sampling 1/10</td><td class="num">98,9 %</td><td class="no">Não</td><td class="yes">Sim</td><td>Estimados (erro &lt; 0,6 %)</td><td class="no">Não</td></tr>
+      <tr><td>Fluxos (Argus)</td><td class="num">99,97 %</td><td class="no">Não</td><td class="no">Não</td><td class="yes">Exatos</td><td class="no">Não</td></tr>
+    </tbody>
+  </table>
+  <div class="grid g3" style="margin-top:40px">
+    <div class="card"><span class="tag">Tempos e jitter</span><p>Filtro + snaplen 96</p></div>
+    <div class="card"><span class="tag">Estatísticas de volume</span><p>Sampling</p></div>
+    <div class="card"><span class="tag">Retenção prolongada</span><p>Fluxos</p></div>
+  </div>
+  <aside class="notes">Mas nenhuma redução é grátis. Com filtro e snaplen guardamos todos os pacotes, os tempos e o cabeçalho IP, por isso ainda conseguimos calcular o jitter. O sampling mantém os volumes, com erro abaixo de 0,6 por cento, mas os intervalos entre pacotes amostrados deixam de ser reais. E os fluxos guardam totais exatos e a duração, mas perdem completamente a temporização. Ou seja: para estudar QoS, o limite razoável é filtro com truncagem.</aside>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <div class="kicker">Agregação em fluxos</div>
+  <h2>Argus e tshark reduzem mais de 99,9&nbsp;%, mas agregam de forma diferente</h2>
+  <div class="grid g2" style="margin-bottom:28px">
+    <div class="card">
+      <h3>Argus</h3>
+      <ul class="clean">
+        <li style="font-size:19px"><b>797</b> fluxos, 64,8 kB em CSV (99,97 %)</li>
+        <li style="font-size:19px">Todos os protocolos: ICMP, ARP, IGMP, LLDP…</li>
+        <li style="font-size:19px">Agrupa por <b>5-tuplo</b>; totais exatos</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>tshark (conversations)</h3>
+      <ul class="clean">
+        <li style="font-size:19px"><b>612</b> conversas, 89,8 kB em texto (99,96 %)</li>
+        <li style="font-size:19px">Só UDP e TCP</li>
+        <li style="font-size:19px">Conta cada <b>ligação</b>; arredonda bytes</li>
+      </ul>
+    </div>
+  </div>
+  <p>O fluxo de jogo inteiro cabe num registo de <b>229 B</b>, e os totais do Argus batem byte a byte com o pcap filtrado.</p>
+  <aside class="notes">Comparámos duas ferramentas de fluxos. Chegam a tamanhos semelhantes, mas registam coisas diferentes. O Argus apanha todos os protocolos e agrupa pelo 5-tuplo; o tshark só faz UDP e TCP e conta cada ligação em separado. Por isso o tshark tem 16 conversas TCP a mais: são ligações repetidas a um Chromecast da rede local, com o mesmo 5-tuplo. O resultado mais impressionante: a partida inteira fica num registo de 229 bytes, com os totais exatos.</aside>
+</section>
+
+<!-- 11 -->
+<section class="slide">
+  <div class="kicker">Conclusões</div>
+  <h2>Recomendamos filtrar por portas e IPs de controlo, com snaplen 96</h2>
+  <div class="cmd mono" style="margin-bottom:28px"><span class="k">dumpcap</span> -i &lt;n&gt; -f "udp portrange 27000-27050 or host 193.41.200.101 or host 193.41.200.102" -s 96 -w captura.pcapng</div>
+  <div class="grid g2">
+    <ul class="clean">
+      <li style="font-size:20px"><b>87 %</b> menos bytes; mantém tempos, DSCP e queries DNS.</li>
+      <li style="font-size:20px">Perde o SNI: o controlo passa a ser identificado pelos IPs.</li>
+      <li style="font-size:20px">Fluxo de jogo: UDP dominante, regular e sem QoS.</li>
+    </ul>
+    <div class="card" style="border-style:dashed">
+      <h3>Limitações</h3>
+      <p class="muted">Uma única partida; IP e porta do servidor mudam entre partidas. Cenários derivados offline, não validados ao vivo. Tempos medidos no próprio PC.</p>
+    </div>
+  </div>
+  <aside class="notes">Em conclusão, o FACEIT é um fluxo UDP dominante, regular e sem marcação de QoS, mais um plano de controlo pequeno. Para capturar este serviço recomendamos o filtro de portas mais os dois IPs de controlo, com snaplen de 96. Aplicado à nossa captura poupa 87 por cento e mantém tudo o que precisamos para analisar QoS. O custo é deixar de ver o SNI. As limitações: analisámos uma só partida, a gama de portas pode variar, e esta configuração não foi testada ao vivo.</aside>
+</section>
+
+<!-- 12 -->
+<section class="slide dark">
+  <div class="title-wrap">
+    <div class="bar-accent"></div>
+    <h1>Obrigado</h1>
+    <p class="lead" style="margin-top:24px">Perguntas?</p>
+  </div>
+  <aside class="notes">Obrigado. Ficamos disponíveis para perguntas. Se perguntarem porque a filtragem poupa tão pouco: o jogo já era 79 por cento dos bytes. Se perguntarem se vale para outras partidas: não necessariamente, o IP e a porta mudam.</aside>
+</section>
+
+</div></div>
+
+<div id="progress"></div>
+<div id="hint">← → navegar · N notas · F ecrã inteiro</div>
+<div id="counter"></div>
+<div id="notes"><div class="t">Notas do orador</div><div id="notes-body"></div></div>
+
+<script>
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  const el=(tag,attrs,txt)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(txt!=null)e.textContent=txt;return e;};
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const fmt=v=>v.toLocaleString('pt-PT',{minimumFractionDigits:v%1?1:0,maximumFractionDigits:2});
+
+  // horizontal bar chart
+  function hbar(svg,rows,o){
+    const W=1120,labelW=o.labelW,barW=o.barW,rowH=o.rowH,top=o.top||8,bh=o.bh||22;
+    rows.forEach((r,i)=>{
+      const y=top+i*rowH, w=Math.max(2,r.v/o.max*barW);
+      svg.appendChild(el('text',{x:labelW-16,y:y+bh/2+6,'text-anchor':'end','font-size':o.fs||19,fill:r.hl?css('--ink'):css('--muted'),'font-weight':r.hl?700:400},r.l));
+      svg.appendChild(el('rect',{x:labelW,y:y,width:w,height:bh,rx:3,fill:r.c||css('--ink')}));
+      svg.appendChild(el('text',{x:labelW+w+10,y:y+bh/2+6,'font-size':o.fs||19,'font-weight':700,fill:css('--ink')},fmt(r.v)+' %'));
+    });
+  }
+
+  hbar(document.getElementById('chart-comp'),[
+    {l:'Servidor de jogo',v:79.2,c:css('--accent'),hl:true},
+    {l:'UDP :19336 (ruído)',v:8.9,c:css('--c-filt')},
+    {l:'TCP (todo)',v:6.1,c:css('--c-filt')},
+    {l:'QUIC (todo)',v:4.8,c:css('--c-filt')},
+    {l:'Controlo FACEIT',v:1.7,c:css('--ink'),hl:true},
+    {l:'mDNS / SSDP / DNS',v:0.6,c:css('--c-filt')}
+  ],{labelW:270,barW:760,rowH:52,max:100,bh:28,fs:20});
+
+  // reduction chart with legend
+  const red=document.getElementById('chart-red');
+  const C={f:css('--c-filt'),s:css('--c-snap'),a:css('--c-samp'),x:css('--c-flux')};
+  const leg=[['Filtragem',C.f],['Truncagem (snaplen)',C.s],['Sampling',C.a],['Fluxos',C.x]];
+  let lx=250; leg.forEach(([t,c])=>{red.appendChild(el('rect',{x:lx,y:2,width:14,height:14,rx:2,fill:c}));red.appendChild(el('text',{x:lx+22,y:15,'font-size':16,fill:css('--muted')},t));lx+=t.length*9+64;});
+  hbar(red,[
+    {l:'Filtro IP do servidor',v:21.25,c:C.f},
+    {l:'Filtro portas',v:21.23,c:C.f},
+    {l:'Portas + controlo',v:19.58,c:C.f},
+    {l:'Snaplen 128',v:84.38,c:C.s},
+    {l:'Snaplen 96',v:87.50,c:C.s},
+    {l:'Snaplen 64',v:90.63,c:C.s},
+    {l:'Recomendado',v:87.27,c:C.s,hl:true},
+    {l:'Sampling 1/10',v:92.08,c:C.a},
+    {l:'Snaplen 96 + sampling',v:98.91,c:C.a},
+    {l:'Argus, registos de 5 s',v:99.51,c:C.x},
+    {l:'tshark conversas',v:99.96,c:C.x},
+    {l:'Argus, 1 registo/fluxo',v:99.97,c:C.x}
+  ],{labelW:250,barW:740,rowH:37,max:100,top:34,bh:24,fs:17});
+  // highlight frame on recommended row
+  red.appendChild(el('rect',{x:8,y:34+6*37-6,width:1100,height:36,rx:6,fill:'none',stroke:css('--accent'),'stroke-width':1.5,'stroke-dasharray':'5 4'}));
+
+  // RTT per hop
+  const rtt=document.getElementById('chart-rtt');
+  const hops=[['1',0.4],['2',3.6],['3–4',4.5],['5',29],['17',55.7]];
+  const base=160, maxH=120, bw=56, gap=36, x0=50;
+  rtt.appendChild(el('line',{x1:30,x2:490,y1:base,y2:base,stroke:css('--rule'),'stroke-width':1.5}));
+  hops.forEach(([h,v],i)=>{
+    const x=x0+i*(bw+gap), hgt=Math.max(2,v/60*maxH), last=i===hops.length-1;
+    rtt.appendChild(el('rect',{x:x,y:base-hgt,width:bw,height:hgt,rx:3,fill:last?css('--accent'):css('--c-filt')}));
+    rtt.appendChild(el('text',{x:x+bw/2,y:base-hgt-8,'text-anchor':'middle','font-size':16,'font-weight':700,fill:css('--ink')},fmt(v)+' ms'));
+    rtt.appendChild(el('text',{x:x+bw/2,y:base+22,'text-anchor':'middle','font-size':14,fill:css('--muted')},last?'servidor':'salto '+h));
+  });
+
+  // navigation
+  const slides=[...document.querySelectorAll('.slide')];
+  const stage=document.getElementById('stage');
+  const notes=document.getElementById('notes'), nb=document.getElementById('notes-body');
+  let i=0;
+  try{const h=parseInt(location.hash.slice(1),10);if(h>=1&&h<=slides.length)i=h-1;}catch(e){}
+  function fit(){const s=Math.min(innerWidth/1280,innerHeight/720)*0.96;stage.style.transform='scale('+s+')';}
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    document.getElementById('counter').textContent=(i+1)+' / '+slides.length;
+    document.getElementById('progress').style.width=((i+1)/slides.length*100)+'%';
+    const n2=slides[i].querySelector('.notes'); nb.textContent=n2?n2.textContent.trim():'';
+    try{history.replaceState(null,'','#'+(i+1));}catch(e){}
+  }
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();show(i+1);}
+    else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();show(i-1);}
+    else if(e.key==='Home')show(0);
+    else if(e.key==='End')show(slides.length-1);
+    else if(e.key==='n'||e.key==='N')notes.classList.toggle('show');
+    else if(e.key==='f'||e.key==='F'){if(!document.fullscreenElement)document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen();else document.exitFullscreen();}
+  });
+  document.getElementById('viewport').addEventListener('click',e=>{if(e.clientX>innerWidth/3)show(i+1);else show(i-1);});
+  let tx=null;addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{if(tx==null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>40)show(i+(d<0?1:-1));tx=null;});
+  addEventListener('resize',fit);
+  fit();show(i);
+})();
+</script>
+</body>
+</html>
