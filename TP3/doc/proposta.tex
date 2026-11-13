@@ -38,7 +38,7 @@
 \end{abstract}
 
 \section{Objetivos}
-O projeto cobre os cinco aspetos de QoS do enunciado: \textbf{classificação}, \textbf{controlo de acesso}, \textbf{policiamento}, \textbf{agendamento} e \textbf{monitorização}, cada um implementado como VNF num contentor Docker. Com a ligação de acesso de 10~Mbit/s congestionada, a cadeia deve garantir:
+O projeto cobre os cinco aspetos de QoS do enunciado (classificação, controlo de acesso, policiamento, agendamento e monitorização), cada um implementado como VNF num contentor Docker. Com a ligação de acesso de 10~Mbit/s congestionada, a cadeia deve garantir:
 \begin{itemize}
     \item \textbf{VoIP:} atraso num sentido inferior a 150~ms (ITU-T G.114~\cite{g114}), \textit{jitter} inferior a 30~ms e perdas inferiores a 1\%.
     \item \textbf{Vídeo:} débito de pelo menos 4~Mbit/s com perdas inferiores a 1\%.
@@ -94,12 +94,7 @@ A topologia imita um ISP: a LAN de clientes chega à LAN de servidores através 
 \end{figure}
 
 \section{Arquitetura de QoS}
-A cadeia de serviço é \textbf{vnf\_fw → vnf\_cls → vnf\_tc}, com a vnf\_mon fora do caminho de dados. Cada VNF é um salto IP com encaminhamento ativo, encadeado por rotas estáticas. A ordem difere do exemplo do enunciado por três razões:
-\begin{itemize}
-    \item \textbf{Controlo de acesso primeiro:} o tráfego não autorizado é descartado antes de consumir CPU nas VNFs seguintes.
-    \item \textbf{Classificação antes do controlo de tráfego:} o policiamento e as filas decidem pela marca DSCP, que tem de existir quando o pacote lá chega.
-    \item \textbf{Monitorização fora do caminho:} os contadores são recolhidos pela rede de gestão, sem acrescentar atraso aos pacotes.
-\end{itemize}
+A cadeia de serviço é \textbf{vnf\_fw → vnf\_cls → vnf\_tc}, com a vnf\_mon fora do caminho de dados. Cada VNF é um salto IP com encaminhamento ativo, encadeado por rotas estáticas. A ordem difere do exemplo do enunciado. O controlo de acesso vem primeiro para que o tráfego não autorizado seja descartado antes de consumir CPU nas VNFs seguintes. A classificação vem antes do controlo de tráfego porque o policiamento e as filas decidem pela marca DSCP, que já tem de estar no pacote quando ele lá chega. A monitorização fica fora do caminho de dados: recolhe os contadores pela rede de gestão e não acrescenta atraso aos pacotes.
 
 A política segue o modelo DiffServ~\cite{rfc2475, rfc2474} com três classes (Tabela~\ref{tab:diffserv}). A vnf\_tc limita a saída a 9,5~Mbit/s, abaixo dos 10~Mbit/s da ligação de acesso, para que a fila se forme dentro da VNF, onde o agendador decide, e não no enlace. O controlo de acesso usa uma lista branca com estado: só passa tráfego da LAN de clientes para a LAN de servidores nas portas da tabela, ICMP e respostas a ligações estabelecidas; tudo o resto, incluindo o h\_intruso, é descartado e contado.
 
@@ -120,13 +115,13 @@ Best effort & TCP 5201 e restante & por omissão & BE (0) & HTB: 2~Mbit/s garant
 \end{table}
 
 \section{Ferramentas}
-Todas as VNFs correm como contentores Docker a partir de uma imagem comum (Ubuntu 22.04), com o repositório montado em \texttt{/tp3}. O ambiente é o \textbf{Containernet}~\cite{medicine} (Mininet, Open vSwitch e Docker) numa VM em VirtualBox, alinhado com a arquitetura de referência ETSI NFV~\cite{etsi002}. O tráfego é gerado com \textbf{D-ITG}~\cite{ditg} (VoIP, com atraso num sentido) e \textbf{iperf3} (vídeo e dados), e a degradação do núcleo com \texttt{tc netem}. O controlo de versões é feito em Git.
+Todas as VNFs correm como contentores Docker a partir de uma imagem comum (Ubuntu 22.04), com o repositório montado em \texttt{/tp3}. O ambiente é o Containernet~\cite{medicine} (Mininet, Open vSwitch e Docker) numa VM em VirtualBox, e a separação das funções em VNFs segue a arquitetura de referência ETSI NFV~\cite{etsi002}. O tráfego é gerado com D-ITG~\cite{ditg} (VoIP, com atraso num sentido) e iperf3 (vídeo e dados), e a degradação do núcleo com \texttt{tc netem}. O controlo de versões é feito em Git.
 
 \begin{itemize}[nosep]
-    \item \textbf{vnf\_fw:} nftables com estado e contadores por regra.
-    \item \textbf{vnf\_cls:} nftables para marcação DSCP no caminho rápido; Python com Scapy e NetfilterQueue para inspeção RTP, comparada em débito e latência.
-    \item \textbf{vnf\_tc:} \texttt{tc} com \textit{police} (\textit{token bucket}) na classe EF e HTB com fq\_codel; PRIO como alternativa.
-    \item \textbf{vnf\_mon:} Prometheus e Grafana, com node\_exporter e um \textit{exporter} em Python para \texttt{tc -s class} e contadores do nftables.
+    \item \texttt{vnf\_fw}: nftables com estado e contadores por regra.
+    \item \texttt{vnf\_cls}: nftables para marcação DSCP no caminho rápido; Python com Scapy e NetfilterQueue para inspeção RTP, comparada em débito e latência.
+    \item \texttt{vnf\_tc}: \texttt{tc} com \textit{police} (\textit{token bucket}) na classe EF e HTB com fq\_codel; PRIO como alternativa.
+    \item \texttt{vnf\_mon}: Prometheus e Grafana, com node\_exporter e um \textit{exporter} em Python para \texttt{tc -s class} e contadores do nftables.
 \end{itemize}
 
 Como extensões para bónus, se o calendário o permitir, prevê-se a classificação por aprendizagem automática (árvore de decisão sobre o tamanho e o intervalo entre pacotes) e o encaminhamento da cadeia por regras OpenFlow no Open vSwitch, em vez de rotas estáticas.
