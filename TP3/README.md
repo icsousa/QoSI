@@ -5,16 +5,29 @@ Topologia tipo ISP em Containernet com uma cadeia de VNFs em Docker:
 
 ## Requisitos
 
-- VM Ubuntu 22.04 (VirtualBox), 4 GB RAM, 2+ vCPU
-- Docker e [Containernet](https://github.com/containernet/containernet) (instalação com Ansible, ver README do projeto)
+- VM Ubuntu 22.04 Server, 4 GB RAM, 2+ vCPU, 25 GB de disco
+  - **PC / Mac Intel:** imagem amd64 (VirtualBox)
+  - **Mac Apple Silicon (M1–M5):** imagem **arm64** ("Ubuntu Server for ARM"), em VirtualBox 7.1+ ou UTM. A imagem amd64 não arranca.
+- Docker e [Containernet](https://github.com/containernet/containernet), instalados pelo `instalar_vm.sh`
+
+## Instalação (uma vez, dentro da VM)
+
+```bash
+git clone https://github.com/icsousa/QoSI.git && cd QoSI/TP3
+./instalar_vm.sh          # Containernet em ~/containernet (venv) + imagem qosi/base
+```
 
 ## Arranque
 
+O Containernet está num venv e o Mininet precisa de root, por isso usa-se `sudo -E env PATH=$PATH`:
+
 ```bash
-sudo docker build -t qosi/base:latest docker/     # uma vez
-sudo python3 topologia.py --check                 # cria, testa ping e sai
-sudo python3 topologia.py                         # cria e abre a CLI do Mininet
+source ~/containernet/venv/bin/activate
+sudo -E env PATH=$PATH python3 topologia.py --check   # cria, testa ping e sai
+sudo -E env PATH=$PATH python3 topologia.py           # cria e abre a CLI do Mininet
 ```
+
+Se uma execução for interrompida e deixar contentores ou interfaces para trás: `sudo -E env PATH=$PATH mn -c` e `sudo docker rm -f $(sudo docker ps -aq --filter name=mn.)`.
 
 Noutro terminal, com a topologia a correr:
 
@@ -51,6 +64,8 @@ Cada execução cria `resultados/<mistura>_<etiqueta>_<data>/` com os JSON do ip
 ## Notas
 
 - Na fase 1 as VNFs só encaminham: é o estado "sem QoS". A fase 2 acrescenta `vnfs/<nome>/start.sh` em cada contentor.
+- Controlo de acesso (fase 2): a lista branca da `vnf_fw` filtra por IP de origem **e** porta. O `h_intruso` está na mesma LAN que os clientes legítimos, por isso só a porta não chega (com a porta 5201 passaria).
+- `ip_forward` e `rp_filter` são passados ao Docker na criação dos contentores (`sysctls`); dentro de um contentor não privilegiado `/proc/sys` é só de leitura. O `topologia.py` verifica-os no arranque.
 - `tc-out` tem um `tbf` de 10 Mbit/s a emular a ligação; a `vnf_tc` substitui-o pelo HTB a 9,5 Mbit/s.
 - O cenário `degradado` altera o netem de `r1-core` e repõe-no no fim.
 - Offloads (TSO/GSO/GRO) desligados nas interfaces de dados para o tc medir bem.

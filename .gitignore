@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# LaTeX (auxiliares; o PDF final fica no repositório)
+*.aux
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+*.bbl
+*.blg
