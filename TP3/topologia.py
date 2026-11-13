@@ -8,10 +8,10 @@ TP3 QoSI — Topologia tipo ISP em Containernet.
 Todos os nós são contentores Docker (imagem qosi/base). O repositório é montado
 em /tp3 dentro de cada contentor, para partilhar scripts e resultados.
 
-Uso:
-  sudo python3 topologia.py                 # cria a topologia e abre a CLI
-  sudo python3 topologia.py --check         # cria, testa conectividade e sai
-  sudo python3 topologia.py --access-bw 10 --core-delay 10ms
+Uso (com o venv do Containernet ativo, ver README):
+  sudo -E env PATH=$PATH python3 topologia.py                 # cria a topologia e abre a CLI
+  sudo -E env PATH=$PATH python3 topologia.py --check         # cria, testa conectividade e sai
+  sudo -E env PATH=$PATH python3 topologia.py --access-bw 10 --core-delay 10ms
 """
 import argparse
 import os
@@ -64,7 +64,15 @@ def docker(net, name, forward=False):
         cap_add=['NET_ADMIN', 'NET_RAW'],
     )
     if forward:
-        params['sysctls'] = {'net.ipv4.ip_forward': 1}
+        # Os contentores não são privilegiados: /proc/sys é só de leitura lá dentro,
+        # por isso os sysctls têm de ser passados ao Docker na criação.
+        # rp_filter a 0 porque as VNFs têm várias interfaces e podem ver rotas assimétricas;
+        # "default" aplica-se às interfaces que o Mininet cria depois do arranque.
+        params['sysctls'] = {
+            'net.ipv4.ip_forward': 1,
+            'net.ipv4.conf.all.rp_filter': 0,
+            'net.ipv4.conf.default.rp_filter': 0,
+        }
     return net.addDocker(name, **params)
 
 
@@ -134,11 +142,12 @@ def configure(nodes, access_bw, core_bw, core_delay):
     sh(nodes['r1'], 'ip route replace default via 10.0.20.2')
     sh(nodes['r2'], 'ip route replace default via 10.0.20.1')
 
-    info('*** Encaminhamento IP (redundante com sysctls, por segurança)\n')
+    info('*** Verificação dos sysctls (definidos na criação dos contentores)\n')
     for name in DATA_INTFS:
-        nodes[name].cmd('sysctl -qw net.ipv4.ip_forward=1')
-        # rp_filter desligado: as VNFs têm várias interfaces e rotas assimétricas são possíveis
-        nodes[name].cmd('sysctl -qw net.ipv4.conf.all.rp_filter=0')
+        fwd = nodes[name].cmd('cat /proc/sys/net/ipv4/ip_forward').strip()
+        rpf = nodes[name].cmd('cat /proc/sys/net/ipv4/conf/all/rp_filter').strip()
+        if fwd != '1' or rpf != '0':
+            error(f'[{name}] ip_forward={fwd} rp_filter={rpf} (esperado 1 e 0)\n')
 
     info('*** Offloads desligados (tc preciso em veth)\n')
     for name, intfs in DATA_INTFS.items():
