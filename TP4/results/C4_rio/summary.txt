@@ -1,0 +1,19 @@
+Cenario: C4_rio
+
+Largura de banda no link E1->C0 [Mbps], media por fase
+  fluxo                                     so Cli1 (1-5s)   Cli1+Cli2 (6-10s)       os 3 (11-20s)
+  TOTAL                                              2.990               4.987               4.872
+  Cli1->Cli6 (0.0->8.0)                              2.990               2.507               1.583
+  Cli2->Cli5 (1.0->7.0)                              0.000               2.480               1.593
+  Cli3->Cli4 (2.0->6.0)                              0.000               0.000               1.696
+
+Largura de banda no link E2->C0 [Mbps], media por fase
+  fluxo                                     so Cli1 (1-5s)   Cli1+Cli2 (6-10s)       os 3 (11-20s)
+  TOTAL                                              0.000               0.000               0.000
+
+Perdas (todos os links) [pkt/s], media por fase
+  fluxo                                     so Cli1 (1-5s)   Cli1+Cli2 (6-10s)       os 3 (11-20s)
+  TOTAL                                              1.000             120.000             625.636
+  Cli1->Cli6 (0.0->8.0)                              0.000              59.400             156.091
+  Cli2->Cli5 (1.0->7.0)                              1.000              60.600             156.182
+  Cli3->Cli4 (2.0->6.0)                              0.000               0.000             313.364

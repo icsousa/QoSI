@@ -1,0 +1,92 @@
+ When configured, ns found the right version of tclsh in /usr/bin/tclsh8.6
+but it doesn't seem to be there anymore, so ns will fall back on running the first tclsh in your path. The wrong version of tclsh may break the test suites. Reconfigure and rebuild ns if this is a problem. 
+limit_ E1C0 = 50 pacotes
+limit_ C0E2 = 50 pacotes
+
+--------------------------------------------
+
+Estatisticas da Fila de Espera de E1 para C0
+
+Estatisticas da Fila de Espera de C0 para E2
+
+--------------------------------------------
+
+--------------------------------------------
+
+Estatisticas da Fila de Espera de E1 para C0
+
+Estatisticas da Fila de Espera de C0 para E2
+
+--------------------------------------------
+
+--------------------------------------------
+
+Estatisticas da Fila de Espera de E1 para C0
+
+Estatisticas da Fila de Espera de C0 para E2
+
+--------------------------------------------
+Policy Table(2):
+Flow (0 to 8): Token Bucket policer, initial code  point 10, CIR 2000000.0 bps, CBS 5000.0 bytes.
+Flow (-1 to -1): Null policer, initial code point 11
+
+Policer Table:
+Token Bucket policer code point 10 is policed to code point 11.
+Null policer code point 11 is policed to code point 11.
+
+Policy Table(2):
+Flow (8 to 0): Token Bucket policer, initial code  point 10, CIR 2000000.0 bps, CBS 5000.0 bytes.
+Flow (-1 to -1): Null policer, initial code point 11
+
+Policer Table:
+Token Bucket policer code point 10 is policed to code point 11.
+Null policer code point 11 is policed to code point 11.
+
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All     5619     3136     2097      386
+ 10     1252     1252        0        0
+ 11     4367     1884     2097      386
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All     3111     3111        0        0
+ 10     1242     1242        0        0
+ 11     1869     1869        0        0
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All    11244     6261     4197      786
+ 10     2502     2502        0        0
+ 11     8742     3759     4197      786
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All     6236     6236        0        0
+ 10     2492     2492        0        0
+ 11     3744     3744        0        0
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All    16869     9386     6298     1185
+ 10     3752     3752        0        0
+ 11    13117     5634     6298     1185
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All     9361     9361        0        0
+ 10     3742     3742        0        0
+ 11     5619     5619        0        0

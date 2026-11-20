@@ -1,0 +1,22 @@
+ When configured, ns found the right version of tclsh in /usr/bin/tclsh8.6
+but it doesn't seem to be there anymore, so ns will fall back on running the first tclsh in your path. The wrong version of tclsh may break the test suites. Reconfigure and rebuild ns if this is a problem. 
+
+Estatisticas finais da fila E1->C0
+Policy Table(4):
+Flow (0 to 8): Token Bucket policer, initial code  point 10, CIR 1500000.0 bps, CBS 10000.0 bytes.
+Flow (1 to 7): Token Bucket policer, initial code  point 10, CIR 1500000.0 bps, CBS 10000.0 bytes.
+Flow (2 to 6): Token Bucket policer, initial code  point 10, CIR 1500000.0 bps, CBS 10000.0 bytes.
+Flow (-1 to -1): Null policer, initial code point 11
+
+Policer Table:
+Token Bucket policer code point 10 is policed to code point 11.
+Null policer code point 11 is policed to code point 11.
+
+
+Packets Statistics
+=======================================
+ CP  TotPkts   TxPkts   ldrops   edrops
+ --  -------   ------   ------   ------
+All    18753    11278     7123      352
+ 10     8465     8465        0        0
+ 11    10288     2813     7123      352

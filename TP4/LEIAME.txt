@@ -1,0 +1,22 @@
+TP4 QoS - como usar (na VM com NS-2)
+=====================================
+1) Copiar esta pasta para a VM e correr:
+       chmod +x run_all.sh && ./run_all.sh
+   Gera results/<cenario>/ com: *.gr, stats.txt (printStats), drops_por_link.txt,
+   summary.txt (medias por fluxo) e bw.png/bwE2.png/loss.png (se houver matplotlib;
+   senao usar xgraph loss*.gr / xgraph bw*.gr dentro de cada pasta).
+
+2) Cenarios / scripts
+   A_droptail  qos0.tcl        original (A.1, A.2)
+   A_red       qos0_red.tcl    RED em E1-C0 e E2-C0 (A.3)
+   B           qosB.tcl        CBR 1<->6, FTP 2->5 e 4->2, Voz 3<->4 (B.1)
+   C_diffserv  qos1.tcl        original + impressao de limit_ (C.1-C.3)
+   C4_ds       qosC4.tcl ds    proposta: Token Bucket 1.5 Mbps/cliente + 2 filas WRR 9:1 + RED
+   C4_rio      qosC4.tcl rio   variante: 1 fila RIO-C com 2 precedencias
+   C4_be       qosC4.tcl be    mesmo trafego em Best-Effort (referencia)
+
+   bw_link.awk = bw.awk com link/prefixo parametrizaveis (-v s=5 -v d=4 -v outf=bwE2)
+
+3) Relatorio: relatorio.tex (classe llncs - compila no Overleaf com o template LNCS).
+   Colocar a pasta results/ ao lado do .tex. Os valores a AZUL sao previsoes
+   analiticas: confirmar/substituir com summary.txt e stats.txt e depois remover a cor.

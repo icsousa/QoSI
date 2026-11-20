@@ -1,0 +1,25 @@
+Cenario: C_diffserv
+
+Largura de banda no link E1->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.900
+  Cli1->Cli6 (0.0->8.0)                              2.381
+  Cli2->Cli5 (1.0->7.0)                              1.316
+  Cli3->Cli4 (2.0->6.0)                              1.203
+
+Largura de banda no link E2->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.920
+  Cli4->Cli3 (6.1->2.1)                              1.326
+  Cli5->Cli2 (7.1->1.1)                              1.280
+  Cli6->Cli1 (8.1->0.1)                              2.314
+
+Perdas (todos os links) [pkt/s], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                            935.250
+  Cli1->Cli6 (0.0->8.0)                             65.562
+  Cli2->Cli5 (1.0->7.0)                            194.750
+  Cli3->Cli4 (2.0->6.0)                            207.438
+  Cli4->Cli3 (6.1->2.1)                            192.812
+  Cli5->Cli2 (7.1->1.1)                            198.500
+  Cli6->Cli1 (8.1->0.1)                             76.188

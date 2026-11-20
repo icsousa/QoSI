@@ -1,0 +1,438 @@
+% Formato LNCS. Se o llncs.cls nao estiver disponivel (ex.: compilacao local), usa article
+% com definicoes equivalentes, para o documento compilar na mesma.
+\IfFileExists{llncs.cls}{\documentclass[runningheads]{llncs}}{\documentclass{article}}
+\ifdefined\institute\else
+  \newcommand{\institute}[1]{\date{#1}}
+  \newcommand{\titlerunning}[1]{}
+  \newcommand{\authorrunning}[1]{}
+  \newcommand{\keywords}[1]{\par\smallskip\noindent\textbf{Keywords:} {\def\and{\unskip\ $\cdot$\ }#1}}
+\fi
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[portuguese]{babel}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+\graphicspath{{results/}}
+\lstset{basicstyle=\ttfamily\scriptsize,frame=single,breaklines=true,columns=fullflexible}
+
+% Valores medidos nas simulações (results/*/summary.txt, results/*/stats.txt e traces).
+\newcommand{\esp}[1]{#1}
+% Inclui o gráfico se existir; caso contrário mostra uma caixa a indicar o ficheiro em falta.
+\newcommand{\fig}[2][\linewidth]{\IfFileExists{results/#2}{\includegraphics[width=#1]{#2}}%
+  {\fbox{\parbox[c][3cm][c]{0.9#1}{\centering\scriptsize falta \texttt{results/\detokenize{#2}}}}}}
+
+\begin{document}
+\title{TP4 -- Estudo de QoS e Mecanismos de Controlo de Tráfego\\com o NS-2}
+\titlerunning{TP4 -- QoS e Controlo de Tráfego}
+\author{Nome Aluno 1 (A00000) \and Nome Aluno 2 (A00000) \and Nome Aluno 3 (A00000)}
+\authorrunning{Grupo XX}
+\institute{Qualidade de Serviço na Internet, Universidade do Minho\\Ano letivo 2026/2027}
+\maketitle
+
+\begin{abstract}
+Este trabalho compara, com o simulador NS-2, o modelo Best-Effort (filas DropTail e RED) com
+o modelo de Serviços Diferenciados (DiffServ) numa rede de ISP com um backbone de 5~Mbps.
+Mostra-se que, com tráfego UDP não reativo, a gestão ativa de filas (RED) não reduz as perdas
+totais, apenas as redistribui e diminui a ocupação da fila. Mostra-se também que o TCP é
+penalizado quando partilha o backbone com UDP. Por fim, propõe-se e avalia-se uma
+configuração DiffServ que garante 30\% da capacidade a cada cliente e reclassifica o excesso
+para prioridade inferior.
+\keywords{QoS \and NS-2 \and DropTail \and RED \and RIO \and DiffServ \and WRR}
+\end{abstract}
+
+%=====================================================================
+\section{Introdução e metodologia}
+A topologia (Fig.~1 do enunciado) tem seis clientes (Cli1--Cli6, nós 0--2 e 6--8), dois
+routers de edge (E1 = nó 3, E2 = nó 5) e um router de core (C0 = nó 4). As ligações de acesso
+têm 5~Mbps e 5~ms; as ligações do backbone (E1--C0 e C0--E2) têm 5~Mbps e 10~ms.
+
+Todas as simulações duram 15~s (20~s na C.4) e usam pacotes de 1000~B. As métricas obtêm-se
+do trace com os scripts fornecidos. Com \texttt{loss.awk} obtêm-se as perdas (pacotes/s, total
+e por fluxo, em todos os links). Com \texttt{bw.awk} obtém-se o débito em bits/s. O
+\texttt{bw.awk} só conta pacotes recebidos em C0 vindos de E1 ($s=3$, $d=4$), ou seja, mede o
+link E1$\rightarrow$C0. Para medir também o sentido inverso usou-se uma cópia parametrizável
+(\texttt{bw\_link.awk}, $s=5$, $d=4$). Ambas as métricas usam intervalos de 1~s. O script
+\texttt{run\_all.sh} corre todos os cenários e produz, para cada um, os ficheiros
+\texttt{.gr}, os gráficos e um resumo com as médias por fluxo (\texttt{summary.txt}).
+Os débitos indicados são médias entre $t=1$ e $t=15$~s. O \texttt{loss.awk} só escreve um
+ponto quando há descartes e inclui um último intervalo parcial, pelo que a média dos seus
+pontos subestima a taxa de perdas. Por isso, as taxas de perda indicadas foram obtidas
+contando diretamente os eventos \texttt{d} do trace e dividindo pela duração (15~s, ou a
+duração de cada fase na C.4).
+Simulador: NS-2.35 (pacote \texttt{ns2} do Ubuntu 20.04).
+
+Os fluxos são identificados pelo par \texttt{nó.porta} de origem e de destino (por exemplo,
+\texttt{0.0\_8.0} = Cli1$\rightarrow$Cli6). Como a topologia é simétrica, a análise centra-se
+no sentido E1$\rightarrow$C0$\rightarrow$E2.
+
+%=====================================================================
+\section{Cenário 1 -- Best-Effort}
+
+\subsection{A.1 -- Links em congestão}
+Cada sentido recebe três fluxos CBR de 3~Mbps, ou seja, 9~Mbps (1125~pacotes/s). As ligações
+de acesso só transportam 3~Mbps, abaixo dos 5~Mbps disponíveis, e não congestionam. No
+backbone, todo o tráfego de Cli1--Cli3 converge na interface de saída E1$\rightarrow$C0, e todo
+o tráfego de Cli4--Cli6 converge em E2$\rightarrow$C0. Nestas duas interfaces chegam 9~Mbps a
+uma ligação de 5~Mbps (625~pacotes/s).
+
+Os links congestionados são, portanto, \textbf{E1$\rightarrow$C0 e E2$\rightarrow$C0}, isto é,
+as filas de entrada no core. Os links C0$\rightarrow$E2 e C0$\rightarrow$E1 recebem no máximo
+5~Mbps, exatamente a sua capacidade, porque o tráfego já foi limitado a montante. Por isso não
+acumulam fila nem perdem pacotes. O ficheiro \texttt{drops\_por\_link.txt} confirma isto: só
+há descartes nos pares de nós \esp{3$\rightarrow$4 e 5$\rightarrow$4} (7453 pacotes em cada
+um, em 15~s).
+
+\subsection{A.2 -- Perdas e largura de banda (DropTail)}
+A Fig.~\ref{fig:a-dt} mostra os resultados. O débito total em E1$\rightarrow$C0 satura nos
+\esp{4,94~Mbps} desde o primeiro segundo. O excesso, $9-5=4$~Mbps por sentido
+($\approx$500~pacotes/s), é descartado. A perda total nos dois sentidos fica assim em
+\esp{993,7~pacotes/s} (100 pacotes em cada 0,1~s a partir de $t\approx0{,}1$~s), constante
+ao longo da simulação, porque as fontes CBR não reagem às perdas.
+
+A fila DropTail (por omissão com 50 pacotes) enche em cerca de $50/500=0{,}1$~s e mantém-se
+cheia. Isto acrescenta $\approx 50\times1{,}6~\text{ms}=80$~ms de atraso de fila. A repartição
+da capacidade entre fluxos depende apenas da ordem de chegada dos pacotes no instante em que a
+fila está cheia. Como as três fontes são determinísticas, têm o mesmo período e arrancam no
+mesmo instante, o DropTail reparte os 5~Mbps de forma \esp{muito desigual (efeito de fase)}:
+sempre que se liberta um lugar na fila, é o pacote do mesmo fluxo que o ocupa. Em
+E1$\rightarrow$C0, Cli1$\rightarrow$Cli6 fica com \esp{2,95~Mbps} e \esp{não perde nenhum
+pacote}, Cli2$\rightarrow$Cli5 fica com \esp{1,97~Mbps} (\esp{124,2~pacotes/s} perdidos) e
+Cli3$\rightarrow$Cli4 fica praticamente sem serviço, com \esp{0,02~Mbps} (\esp{372,7} dos
+375~pacotes/s oferecidos são descartados). O sentido inverso é simétrico. Uma repartição justa
+daria $\approx$1,67~Mbps e 167~pacotes/s perdidos por fluxo.
+
+\begin{figure}[t]\centering
+\begin{subfigure}{0.49\linewidth}\fig{A_droptail/bw.png}\caption{Débito em E1$\rightarrow$C0}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{A_droptail/loss.png}\caption{Perdas}\end{subfigure}
+\caption{Best-Effort com DropTail (qos0.tcl).}\label{fig:a-dt}
+\end{figure}
+
+\subsection{A.3 -- DropTail $\rightarrow$ RED}
+Nos dois links congestionados, a fila passou a RED
+(\texttt{\$ns duplex-link \$E1 \$C0 5Mb 10ms RED}, e o mesmo para E2--C0). Os parâmetros foram
+fixados explicitamente: $min_{th}=5$, $max_{th}=15$ pacotes, $max_p=0{,}1$ e $w_q=0{,}002$. A
+Fig.~\ref{fig:a-red} mostra os resultados.
+
+A perda total mantém-se praticamente igual (\esp{999,1~pacotes/s}, contra 993,7 com
+DropTail). O débito total desce ligeiramente, de 4,94 para \esp{4,87~Mbps}: acima de
+$max_{th}$ o RED descarta todas as chegadas e, como a média móvel reage com atraso, a fila
+instantânea chega a esvaziar por breves instantes, deixando o link momentaneamente ocioso. As fontes CBR/UDP são não reativas: um descarte antecipado não
+as faz abrandar. Pela conservação do tráfego, continua a ser preciso descartar 4~Mbps por
+sentido, qualquer que seja a disciplina de fila. O RED não reduz as perdas; muda \emph{quais}
+pacotes são descartados e \emph{quando}:
+\begin{itemize}
+\item como o descarte é aleatório, cada fluxo perde aproximadamente na proporção do seu
+débito. A repartição torna-se \esp{muito mais equitativa: 1,75, 1,74 e 1,38~Mbps}
+(perdas de \esp{150,0, 152,8 e 196,8~pacotes/s}), contra 2,95, 1,97 e 0,02~Mbps com DropTail.
+Já nenhum fluxo fica sem serviço. Resta uma ligeira desvantagem para Cli3$\rightarrow$Cli4:
+com a fila média acima de $max_{th}$, o RED descarta todas as chegadas, e a ordem
+determinística das chegadas CBR continua a pesar um pouco;
+\item com sobrecarga permanente, a média da fila ultrapassa $max_{th}$ e o RED passa a
+descartar todas as chegadas. A fila deverá estabilizar perto de 15 pacotes, o que dá
+uma estimativa de $\approx$24~ms de atraso de fila em vez de $\approx$80~ms (o atraso não foi
+medido). Isto beneficia as aplicações
+sensíveis ao atraso;
+\item nos primeiros instantes, a média móvel ($w_q$ pequeno) reage lentamente. A fila
+instantânea pode ainda atingir o limite físico e provocar \esp{um pico inicial de perdas}.
+O pico existe, mas é pequeno e curto: \esp{133 descartes entre 0,2 e 0,3~s}, contra 100 por
+cada 0,1~s em regime permanente. Por isso não se nota no gráfico com intervalos de 1~s.
+Como o RED começa a descartar mais cedo do que o DropTail, o primeiro segundo tem até mais
+perdas (982 contra 901).
+\end{itemize}
+A vantagem principal do RED, evitar a sincronização global e manter a fila curta com fontes
+TCP, não se manifesta aqui porque não há fontes reativas. Com UDP, o RED funciona sobretudo
+como um descarte justo e limitador do atraso.
+
+\begin{figure}[t]\centering
+\begin{subfigure}{0.49\linewidth}\fig{A_red/bw.png}\caption{Débito em E1$\rightarrow$C0}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{A_red/loss.png}\caption{Perdas}\end{subfigure}
+\caption{Best-Effort com RED nos links congestionados (qos0\_red.tcl).}\label{fig:a-red}
+\end{figure}
+
+%=====================================================================
+\section{Cenário B -- Tráfego misto UDP/TCP}
+O script (\texttt{qosB.tcl}) usa os procedimentos já existentes para criar os fluxos seguintes:
+\begin{itemize}
+\item CBR de 3~Mbps em Cli1$\leftrightarrow$Cli6;
+\item FTP/TCP em Cli2$\rightarrow$Cli5 e Cli4$\rightarrow$Cli2;
+\item voz (\texttt{Exponential} on/off sobre UDP) em Cli3$\leftrightarrow$Cli4.
+\end{itemize}
+Os parâmetros da voz seguem um perfil do tipo G.711: pacotes de 200~B a 80~kbps durante a
+conversação, com conversação média de 1~s e silêncio de 2,5~s. Isto dá $\approx$23~kbps em
+média. A janela máxima do TCP subiu de 20 para 64 pacotes. Com RTT $\approx$60~ms, uma janela
+de 20 limitaria o FTP a $\approx$2,7~Mbps, e o objetivo é que o FTP seja realmente uma fonte
+\emph{greedy}. O agente \texttt{Agent/TCP} do NS-2 é o TCP Tahoe.
+
+\subsection{B.1 -- Aplicações mais afetadas}
+No link E1$\rightarrow$C0 competem o CBR 0$\rightarrow$8 (3~Mbps), o FTP 1$\rightarrow$7, a
+voz 2$\rightarrow$6 e os ACKs do FTP 6$\rightarrow$1. O CBR não reage às perdas e mantém
+sempre os 3~Mbps de oferta. O TCP, pelo contrário, interpreta cada perda como congestão:
+reduz a janela (no Tahoe, volta a 1 segmento e entra em slow-start) e aumenta-a depois
+gradualmente.
+
+O resultado é que o \textbf{FTP é a aplicação mais afetada em débito}. Fica apenas com a
+capacidade sobrante, \esp{1,68~Mbps} em média (Cli2$\rightarrow$Cli5; \esp{1,47~Mbps} para
+Cli4$\rightarrow$Cli2 no sentido inverso), longe de uma partilha justa de 2,5~Mbps. O seu
+débito oscila em dente de serra, entre \esp{0,83 e 2,09~Mbps} por segundo
+(Fig.~\ref{fig:b}). O CBR obtém \esp{2,80~Mbps} e perde apenas \esp{3,7~pacotes/s}. Somando o CBR, o FTP, a voz
+($\approx$0,02~Mbps) e os ACKs, o link E1$\rightarrow$C0 fica abaixo dos 5~Mbps: depois de cada
+perda o Tahoe volta ao slow-start e o link fica temporariamente subaproveitado. Isto ilustra o
+problema clássico da \emph{falta de equidade TCP vs.\ UDP}: os fluxos que se comportam bem
+são penalizados pelos que não controlam a congestão.
+
+As aplicações UDP também sofrem, de outra forma. Sempre que o TCP enche a fila DropTail,
+perdem-se pacotes CBR e de voz. As perdas surgem \esp{em rajadas, nos mesmos instantes para
+todos os fluxos}: a maior ocorre a $t\approx0{,}5$~s (113 descartes), quando o slow-start dos
+dois FTP satura a fila, e as seguintes por volta de 4, 6,5, 9--10 e 12--14,5~s. No total
+houve apenas \esp{346 descartes} em 15~s (\esp{23,1~pacotes/s}). A voz perdeu
+\esp{15 dos 350 pacotes} enviados ($\approx$4\%), 13 deles na rajada inicial. Essas perdas
+não são recuperadas, porque não há retransmissão. Além disso, a fila
+cheia acrescenta até $\approx$80~ms de atraso e jitter. Para a voz, mesmo com perdas absolutas
+pequenas, isto degrada diretamente a qualidade percebida. Para o FTP, as perdas são
+recuperadas, mas à custa do débito e do tempo de transferência.
+
+\begin{figure}[t]\centering
+\begin{subfigure}{0.49\linewidth}\fig{B/bw.png}\caption{Débito em E1$\rightarrow$C0}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{B/loss.png}\caption{Perdas}\end{subfigure}
+\caption{Cenário B: CBR, FTP e voz em Best-Effort/DropTail.}\label{fig:b}
+\end{figure}
+
+%=====================================================================
+\section{Cenário 2 -- Differentiated Services}
+
+\subsection{C.1 -- Configuração do link E1--C0}
+A Tabela~\ref{tab:c1} resume a configuração do link E1--C0 em \texttt{qos1.tcl}.
+
+\begin{table}[t]\centering\caption{Configuração DiffServ do link E1$\rightarrow$C0 em \texttt{qos1.tcl}.}\label{tab:c1}
+\scriptsize
+\begin{tabular}{p{2.6cm}p{8.6cm}}\toprule
+Tipo de fila & \texttt{dsRED/edge} em E1$\rightarrow$C0 (classifica, mede e marca); \texttt{dsRED/core} em C0$\rightarrow$E2 (só aplica o PHB)\\
+Filas e agendador & \texttt{numQueues\_ 1}: \textbf{1 fila física} com \texttt{setNumPrec 2}, isto é, \textbf{2 filas virtuais} (precedências). \texttt{setSchedularMode} (sic, é este o nome no \texttt{dsred.cc}) não é usado, logo vale o agendador por omissão (RR). Com uma única fila física, o agendador não tem efeito\\
+Disciplina & MRED. \texttt{setMREDMode} não é usado, logo vale o modo por omissão \textbf{RIO-C} (RED com entrada/saída acoplada: a probabilidade de descarte da precedência 1 usa a média de toda a fila)\\
+Configuração & \texttt{configQ 0 0 20 40 0.02}: precedência 0 com $min_{th}=20$, $max_{th}=40$, $max_p=0{,}02$. \texttt{configQ 0 1 10 20 0.10}: precedência 1 com $min_{th}=10$, $max_{th}=20$, $max_p=0{,}10$\\
+Memória & Não há \texttt{queue-limit} no script, logo vale \texttt{limit\_} por omissão = \esp{50 pacotes} (valor impresso na simulação, igual em E1$\rightarrow$C0 e C0$\rightarrow$E2) ($\approx$50~KB com pacotes de 1000~B), partilhados pelas duas precedências. Na prática, o RIO mantém a média abaixo de 20 (pacotes ``out'') e de 40 (pacotes ``in'')\\
+Fluxos de dados & Política: Cli1$\rightarrow$Cli6 passa por um \texttt{TokenBucket} (CIR = 2~Mbps, CBS = 5000~B). O tráfego conforme fica com DSCP 10 e o excesso é remarcado para DSCP 11 (\texttt{addPolicerEntry TokenBucket 10 11}). Todo o restante tráfego (\texttt{-1 -1 Dumb}) recebe DSCP 11. PHB: DSCP 10 vai para a fila 0, precedência 0; DSCP 11 vai para a fila 0, precedência 1. \textbf{Todo o tráfego de dados passa pela fila física 0}: a precedência 0 recebe a parte conforme de Cli1$\rightarrow$Cli6 e a precedência 1 recebe o excesso deste fluxo mais Cli2$\rightarrow$Cli5 e Cli3$\rightarrow$Cli4\\
+\bottomrule\end{tabular}\end{table}
+
+\subsection{C.2 -- Fila com maior perda}
+As estatísticas impressas por \texttt{printStats} (\texttt{results/C\_diffserv/stats.txt},
+última impressão aos 15~s) mostram que a \textbf{fila virtual de precedência 1 (DSCP 11)} é a
+que mais perde. Valores aos 15~s na fila E1$\rightarrow$C0:
+\begin{itemize}
+\item DSCP 10: \esp{3752} pacotes recebidos (TotPkts), \esp{3752} transmitidos (TxPkts) e
+\esp{0} descartados (\esp{0} ldrops, \esp{0} edrops);
+\item DSCP 11: \esp{13\,117} pacotes recebidos, \esp{5634} transmitidos e \esp{7483}
+descartados: \esp{6298} ldrops e \esp{1185} edrops.
+\end{itemize}
+A maioria dos descartes não são \emph{edrops} (descartes antecipados), como se poderia
+esperar de uma fila RED. Como a
+sobrecarga é permanente, a média da precedência 1 está quase sempre acima de
+$max_{th}=20$. Nessa zona, o RED descarta todas as chegadas de forma forçada, e o NS-2
+contabiliza esses descartes em \emph{ldrops}, tal como os de fila cheia. Os \emph{edrops}
+(1185) são apenas os descartes probabilísticos entre $min_{th}$ e $max_{th}$. A fila C0$\rightarrow$E2
+não regista nenhum descarte em nenhuma das impressões.
+
+Há três razões para este comportamento:
+\begin{enumerate}
+\item \textbf{volume}: o DSCP 11 recebe $\approx$7~Mbps dos 9~Mbps oferecidos (1~Mbps de
+excesso de Cli1 mais 3+3~Mbps), enquanto o DSCP 10 recebe só 2~Mbps (o CIR);
+\item \textbf{parametrização}: a precedência 1 tem limiares mais baixos (10/20 contra 20/40) e
+$max_p$ cinco vezes maior;
+\item \textbf{RIO-C}: a probabilidade de descarte dos pacotes ``out'' é calculada com a média
+de toda a fila. Quando a fila média passa de 20, todos os pacotes ``out'' são descartados,
+enquanto os ``in'' ainda estão perto do seu $min_{th}$ e quase não sofrem descartes.
+\end{enumerate}
+Como a ligação escoa 625~pacotes/s e os pacotes ``in'' ocupam 250, sobram 375~pacotes/s para os
+875~pacotes/s ``out''. Os restantes $\approx$500~pacotes/s são descartados, todos da
+precedência 1. O link C0$\rightarrow$E2 não regista perdas, porque recebe no máximo 5~Mbps.
+
+\subsection{C.3 -- Comparação com o Best-Effort}
+A Fig.~\ref{fig:c3} mostra as perdas e o débito no cenário DiffServ.
+
+\begin{figure}[t]\centering
+\begin{subfigure}{0.49\linewidth}\fig{C_diffserv/bw.png}\caption{Débito em E1$\rightarrow$C0}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{C_diffserv/loss.png}\caption{Perdas}\end{subfigure}
+\caption{DiffServ (qos1.tcl): 1 fila RIO-C com 2 precedências.}\label{fig:c3}
+\end{figure}
+
+\begin{table}[t]\centering\caption{Débito médio (Mbps) e perdas médias (pacotes/s) por fluxo no sentido E1$\rightarrow$C0.}\label{tab:c3}
+\scriptsize\begin{tabular}{lcccc}\toprule
+ & \multicolumn{2}{c}{Best-Effort (DropTail / RED)} & \multicolumn{2}{c}{DiffServ (qos1)}\\
+Fluxo & Débito & Perdas & Débito & Perdas\\\midrule
+Cli1$\rightarrow$Cli6 & \esp{2,95 / 1,75} & \esp{0,00 / 150,00} & \esp{2,38} & \esp{69,87}\\
+Cli2$\rightarrow$Cli5 & \esp{1,97 / 1,74} & \esp{124,20 / 152,80} & \esp{1,32} & \esp{207,73}\\
+Cli3$\rightarrow$Cli4 & \esp{0,02 / 1,38} & \esp{372,73 / 196,80} & \esp{1,20} & \esp{221,33}\\
+Total & \esp{4,94 / 4,87} & \esp{496,93 / 499,60} & \esp{4,90} & \esp{498,93}\\\bottomrule
+\end{tabular}\end{table}
+
+Comparando com o Best-Effort (Tabela~\ref{tab:c3}):
+\begin{itemize}
+\item \textbf{a utilização total do link e as perdas totais são iguais} (5~Mbps e
+$\approx$500~pacotes/s por sentido). O tráfego continua a ser UDP não reativo e a capacidade
+não muda. O DiffServ não cria capacidade, apenas decide \emph{quem} perde;
+\item \textbf{o fluxo Cli1$\rightarrow$Cli6 fica protegido}. Os 2~Mbps contratados (CIR)
+passam praticamente sem perdas, e o fluxo ainda recebe uma parte do excedente
+($\approx 1\times 3/7$~Mbps), num total de \esp{2,38~Mbps} (estimativa analítica: $2+3/7\approx2{,}43$~Mbps). No
+Best-Effort ficava com 1,75~Mbps com RED. Com DropTail ficou com 2,95~Mbps, mas apenas por
+acaso (efeito de fase) e sem qualquer garantia;
+\item \textbf{os fluxos sem contrato (Cli2, Cli3) suportam praticamente todas as perdas} e
+caem para \esp{1,32 e 1,20~Mbps}. As perdas de Cli1$\rightarrow$Cli6 (\esp{69,9~pacotes/s})
+vêm apenas do seu excesso remarcado para DSCP 11;
+\item a fila é mantida pelo RIO com uma média de cerca de 20 pacotes, o que limita o atraso
+(como no RED) e evita o comportamento arbitrário do DropTail.
+\end{itemize}
+Em suma, o Best-Effort trata todos os pacotes da mesma forma e o resultado depende de
+fatores fortuitos. O DiffServ diferencia o tratamento \emph{por classe}, com base na
+marcação feita no edge, e garante o perfil contratado aos clientes com SLA.
+
+%=====================================================================
+\section{C.4 -- Política de 30\% garantidos por cliente}
+
+\subsection{Interpretação e solução proposta}
+Os 30\% da capacidade do backbone são $0{,}3\times5=1{,}5$~Mbps. A política foi interpretada
+como um \textbf{mínimo garantido de 1,5~Mbps a cada cliente com o mesmo contrato}, com acesso
+à capacidade sobrante. Com três clientes por edge, $3\times1{,}5=4{,}5\le5$~Mbps, pelo que a
+garantia é exequível em simultâneo para todos. A solução (\texttt{qosC4.tcl}) usa os três
+blocos do DiffServ, com a mesma configuração de PHB em todos os routers do domínio.
+
+\begin{enumerate}
+\item \textbf{Medir e reclassificar (só nos edges E1 e E2)}: um Token Bucket por cliente com
+CIR = 1,5~Mbps e CBS = 10\,000~B (10 pacotes), para tolerar pequenas rajadas.
+\begin{itemize}
+\item tráfego conforme: DSCP 10;
+\item excesso: remarcado para DSCP 11 (\texttt{addPolicerEntry TokenBucket 10 11});
+\item tráfego não classificado: DSCP 11.
+\end{itemize}
+\item \textbf{Agendar}: duas filas físicas (DSCP 10 na fila 0, DSCP 11 na fila 1) com
+\textbf{WRR de pesos 9:1}. Com pacotes de igual tamanho, a fila 0 tem direito a 90\% =
+4,5~Mbps, exatamente a soma dos CIR. A fila 1 tem um mínimo de 0,5~Mbps, o que impede o
+\emph{starvation} do tráfego de excesso. Como o WRR é \emph{work-conserving}, a capacidade
+que a fila 0 não usa fica disponível para o excesso. Isto cumpre o requisito ``a capacidade
+total pode ser usada se disponível''.
+\item \textbf{Descartar}: RED em cada fila.
+\begin{itemize}
+\item fila 0: limiares altos e $max_p$ baixo (30/45, 0,02), porque o tráfego garantido não
+deve ser descartado;
+\item fila 1: limiares baixos e $max_p$ alto (10/20, 0,10), porque o excesso é o primeiro a
+ser descartado e a sua fila mantém-se curta.
+\end{itemize}
+\end{enumerate}
+
+\begin{lstlisting}
+$fila addPolicyEntry [$Cli1 id] [$Cli6 id] TokenBucket 10 1500000 10000  ;# idem Cli2, Cli3
+$fila addPolicyEntry -1 -1 Dumb 11
+$fila addPolicerEntry TokenBucket 10 11
+$fila set numQueues_ 2 ; $fila setNumPrec 1
+$fila setSchedularMode WRR ; $fila addQueueWeights 0 9 ; $fila addQueueWeights 1 1   ;# (sic) Schedular
+$fila addPHBEntry 10 0 0 ; $fila addPHBEntry 11 1 0
+$fila configQ 0 0 30 45 0.02 ; $fila configQ 1 0 10 20 0.10
+\end{lstlisting}
+
+Para avaliar a solução, os três clientes têm o mesmo contrato mas comportamentos diferentes:
+\begin{itemize}
+\item Cli1$\rightarrow$Cli6 envia CBR a 3~Mbps a partir de 0~s;
+\item Cli2$\rightarrow$Cli5 envia CBR a 3~Mbps a partir de 5~s;
+\item Cli3$\rightarrow$Cli4, um cliente ``agressivo'', envia CBR a 4,5~Mbps a partir de 10~s.
+\end{itemize}
+O mesmo tráfego foi simulado em Best-Effort/DropTail (\texttt{qosC4.tcl be}) e com uma
+variante AF clássica de uma só fila com RIO-C e duas precedências (\texttt{qosC4.tcl rio}).
+
+\subsection{Resultados}
+A Tabela~\ref{tab:c4} e a Fig.~\ref{fig:c4} resumem os resultados.
+
+\begin{table}[t]\centering\caption{C.4: débito médio (Mbps) por cliente e por fase (médias em
+1--5, 6--10 e 11--20~s) e perdas na última fase (pacotes/s).}\label{tab:c4}
+\scriptsize\resizebox{\linewidth}{!}{\begin{tabular}{l|c|cc|ccc|ccc}\toprule
+ & 0--5~s & \multicolumn{2}{c|}{5--10~s} & \multicolumn{3}{c|}{10--20~s} & \multicolumn{3}{c}{Perdas 10--20~s}\\
+Solução & Cli1 & Cli1 & Cli2 & Cli1 & Cli2 & Cli3 & Cli1 & Cli2 & Cli3\\\midrule
+DiffServ (WRR 9:1) & \esp{2,99} & \esp{2,50} & \esp{2,49} & \esp{1,60} & \esp{1,58} & \esp{1,72} & \esp{170,9} & \esp{171,9} & \esp{344,9}\\
+DiffServ (RIO-C)   & \esp{2,99} & \esp{2,51} & \esp{2,48} & \esp{1,58} & \esp{1,59} & \esp{1,70} & \esp{171,7} & \esp{171,9} & \esp{344,7}\\
+Best-Effort (DropTail) & \esp{2,99} & \esp{2,95} & \esp{2,04} & \esp{1,57} & \esp{0,52} & \esp{2,83} & \esp{181,4} & \esp{314,8} & \esp{191,5}\\\bottomrule
+\end{tabular}}\end{table}
+
+\begin{figure}[t]\centering
+\begin{subfigure}{0.49\linewidth}\fig{C4_ds/bw.png}\caption{DiffServ: débito}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{C4_be/bw.png}\caption{Best-Effort: débito}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{C4_ds/loss.png}\caption{DiffServ: perdas}\end{subfigure}
+\begin{subfigure}{0.49\linewidth}\fig{C4_be/loss.png}\caption{Best-Effort: perdas}\end{subfigure}
+\caption{C.4: política de 30\% com reclassificação do excesso, comparada com o Best-Effort.}\label{fig:c4}
+\end{figure}
+
+\begin{itemize}
+\item \textbf{Utilização da capacidade sobrante}: sozinho, Cli1 usa \esp{2,99~Mbps}, o dobro do
+garantido, porque a capacidade não usada está disponível. Com dois clientes ativos, cada um
+fica com \esp{2,50 e 2,49~Mbps}. A garantia é um mínimo, não um limite.
+\item \textbf{Garantia sob congestão}: com os três clientes ativos, a oferta é de 10,5~Mbps.
+\begin{itemize}
+\item Os 4,5~Mbps conformes passam sem perdas (fila 0).
+\item Os 6~Mbps de excesso disputam os 0,5~Mbps restantes na fila 1 e são repartidos em
+proporção ao excesso de cada cliente (1,5 : 1,5 : 3), ou seja, $\approx$0,125, 0,125 e 0,25~Mbps.
+\item Cada cliente obtém \esp{$\ge$1,5~Mbps}: \esp{1,60, 1,58 e 1,72~Mbps}, muito perto
+da estimativa analítica (1,625/1,625/1,75~Mbps).
+\end{itemize}
+\item \textbf{Comparação com o Best-Effort}: uma repartição proporcional à oferta daria $\approx$1,43/1,43/2,14~Mbps. Com DropTail, porém, o efeito de fase domina.
+Já na segunda fase, Cli1 fica com \esp{2,95~Mbps} e Cli2 só com \esp{2,04~Mbps}. Na última
+fase, o cliente agressivo (Cli3) apropria-se de \esp{2,83~Mbps} e Cli2 cai para
+\esp{0,52~Mbps}, muito abaixo do valor contratado. Cli1 fica com \esp{1,57~Mbps}, mas apenas
+por acaso. Não há qualquer garantia.
+\item \textbf{Perdas}: as perdas totais são iguais nos três casos (5,5~Mbps $\approx$
+\esp{688~pacotes/s} na última fase). Em DiffServ, porém, concentram-se no tráfego fora do
+perfil, e o cliente que mais excede é o que mais perde: Cli3 perde \esp{344,9~pacotes/s},
+o dobro de Cli1 e Cli2 (\esp{$\approx$171}). Em Best-Effort, quem mais perde é Cli2
+(\esp{314,8}), que nem sequer é o cliente agressivo.
+\item \textbf{Variante RIO-C}: com tráfego UDP produz resultados \esp{praticamente iguais}
+aos da solução com WRR (Tabela~\ref{tab:c4}). A única diferença é que o tráfego garantido já
+sofre alguns descartes: \esp{12 pacotes DSCP 10} (ldrops) contra 0 com duas filas, porque
+partilha a fila física com o excesso.
+\end{itemize}
+
+\subsection{Prós e contras para o ISP}
+\textbf{Prós:}
+\begin{itemize}
+\item a garantia mínima é cumprida independentemente do comportamento dos outros clientes
+(isolamento);
+\item a capacidade sobrante continua a ser usada, sem desperdício;
+\item a complexidade por cliente fica só nos edges, enquanto o core trata apenas duas
+classes. Isto escala com o número de clientes, que é o princípio do DiffServ;
+\item a fila do excesso é curta, o que limita o atraso;
+\item o tráfego fora do perfil é ``taxado'' de forma natural, o que incentiva o cumprimento
+do contrato.
+\end{itemize}
+
+\textbf{Contras:}
+\begin{itemize}
+\item cada cliente exige uma entrada de política no edge, a manter quando os contratos
+mudam;
+\item os pesos do WRR têm de acompanhar a soma dos CIR. Sem \textbf{controlo de admissão}
+($\sum CIR\le$ 90\% de 5~Mbps), a garantia deixa de ser exequível;
+\item o WRR conta pacotes, não bytes. Com tamanhos de pacote diferentes, os 90\% deixam de
+ser exatos, e WFQ ou um peso em bytes seria mais rigoroso;
+\item com duas filas físicas, pacotes conformes e não conformes do mesmo fluxo podem ser
+\textbf{reordenados}, o que é prejudicial para o TCP (ACKs duplicados e retransmissões
+espúrias). A variante RIO-C (uma fila, duas precedências, como no AF do RFC~2597) evita a
+reordenação, mas só dá prioridade de \emph{descarte}, não de serviço;
+\item com TCP, um Token Bucket com CBS pequeno é pouco tolerante a rajadas. Um marcador TSW
+ou srTCM/trTCM e um CBS maior seriam mais adequados;
+\item as garantias são por classe e estatísticas. Não há garantias de atraso por fluxo, e o
+atraso e o jitter não foram avaliados.
+\end{itemize}
+
+%=====================================================================
+\section{Conclusões}
+Com tráfego UDP não reativo, a perda total é ditada pela diferença entre a oferta e a
+capacidade. Nem o RED nem o DiffServ a reduzem, mas ambos controlam quem perde e quanto
+atraso a fila introduz. Com DropTail e fontes determinísticas, a repartição é arbitrária
+(efeito de fase), ao ponto de um fluxo ficar quase sem serviço. O RED torna o descarte mais
+equitativo e mantém a fila curta. Na
+presença de TCP, o UDP apropria-se injustamente da capacidade. O DiffServ, combinando
+marcação e policiamento nos edges, filas e AQM por classe e um agendador ponderado, permite
+ao ISP oferecer garantias mínimas por cliente sem desperdiçar capacidade, à custa de
+configuração adicional nos edges e de controlo de admissão.
+
+\end{document}

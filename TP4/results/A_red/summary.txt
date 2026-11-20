@@ -1,0 +1,25 @@
+Cenario: A_red
+
+Largura de banda no link E1->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.873
+  Cli1->Cli6 (0.0->8.0)                              1.751
+  Cli2->Cli5 (1.0->7.0)                              1.739
+  Cli3->Cli4 (2.0->6.0)                              1.382
+
+Largura de banda no link E2->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.891
+  Cli4->Cli3 (6.1->2.1)                              1.741
+  Cli5->Cli2 (7.1->1.1)                              1.717
+  Cli6->Cli1 (8.1->0.1)                              1.433
+
+Perdas (todos os links) [pkt/s], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                            936.688
+  Cli1->Cli6 (0.0->8.0)                            140.625
+  Cli2->Cli5 (1.0->7.0)                            143.250
+  Cli3->Cli4 (2.0->6.0)                            184.500
+  Cli4->Cli3 (6.1->2.1)                            141.875
+  Cli5->Cli2 (7.1->1.1)                            143.750
+  Cli6->Cli1 (8.1->0.1)                            182.688

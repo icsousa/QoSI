@@ -1,0 +1,23 @@
+Cenario: A_droptail
+
+Largura de banda no link E1->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.944
+  Cli1->Cli6 (0.0->8.0)                              2.952
+  Cli2->Cli5 (1.0->7.0)                              1.974
+  Cli3->Cli4 (2.0->6.0)                              0.018
+
+Largura de banda no link E2->C0 [Mbps], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                              4.948
+  Cli4->Cli3 (6.1->2.1)                              2.952
+  Cli5->Cli2 (7.1->1.1)                              1.978
+  Cli6->Cli1 (8.1->0.1)                              0.018
+
+Perdas (todos os links) [pkt/s], media por fase
+  fluxo                                            t=1-15s
+  TOTAL                                            931.625
+  Cli2->Cli5 (1.0->7.0)                            116.438
+  Cli3->Cli4 (2.0->6.0)                            349.375
+  Cli5->Cli2 (7.1->1.1)                            116.438
+  Cli6->Cli1 (8.1->0.1)                            349.375
