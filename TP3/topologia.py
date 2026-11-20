@@ -24,6 +24,7 @@ from mininet.log import setLogLevel, info, error
 
 REPO = os.path.dirname(os.path.abspath(__file__))
 IMG = 'qosi/base:latest'
+IMG_MON = 'qosi/mon:latest'     # base + Prometheus + Grafana (docker/Dockerfile.mon)
 
 # --------------------------------------------------------------------------- #
 # Plano de endereçamento (igual à tabela da proposta)
@@ -54,15 +55,20 @@ DATA_INTFS = {
     'r1':      ['r1-in', 'r1-core'],
     'r2':      ['r2-core', 'r2-lan'],
 }
+# Os hosts também: senão o h_bulk envia super-pacotes TSO/GSO que o HTB
+# da vnf_tc agenda como um só pacote.
+for _n in list(CLIENTES) + list(SERVIDORES):
+    DATA_INTFS[_n] = [f'{_n}-eth0'[:15]]
 
 
-def docker(net, name, forward=False):
+def docker(net, name, forward=False, **extra):
     """Cria um nó Docker com NET_ADMIN (tc, nftables) e o repo montado em /tp3."""
     params = dict(
         dimage=IMG,
         volumes=[f'{REPO}:/tp3:rw'],
         cap_add=['NET_ADMIN', 'NET_RAW'],
     )
+    params.update(extra)
     if forward:
         # Os contentores não são privilegiados: /proc/sys é só de leitura lá dentro,
         # por isso os sysctls têm de ser passados ao Docker na criação.
@@ -96,7 +102,10 @@ def build(net):
     info('*** VNFs e routers\n')
     for name in ('vnf_fw', 'vnf_cls', 'vnf_tc', 'r1', 'r2'):
         nodes[name] = docker(net, name, forward=True)
-    nodes['vnf_mon'] = docker(net, 'vnf_mon')
+    # Grafana (3000) e Prometheus (9090) ficam acessíveis na própria VM
+    nodes['vnf_mon'] = docker(net, 'vnf_mon', dimage=IMG_MON,
+                              ports=[3000, 9090],
+                              port_bindings={3000: 3000, 9090: 9090})
     fw, cls, tc, r1, r2 = (nodes[n] for n in ('vnf_fw', 'vnf_cls', 'vnf_tc', 'r1', 'r2'))
 
     info('*** Ligações do caminho de dados\n')
@@ -117,6 +126,16 @@ def build(net):
         net.addLink(nodes[name], s3, intfName1=f'{short}-mgmt',
                     params1={'ip': f'{ip}/24'})
     return nodes
+
+
+def reaplicar_ips(net):
+    """O net.start() põe o IP automático do Mininet (10.0.0.x/8) na primeira
+    interface de cada nó, por cima do IP dado em addLink. Repõe os IPs das ligações."""
+    for link in net.links:
+        for intf in (link.intf1, link.intf2):
+            ip = intf.params.get('ip')
+            if ip:
+                intf.setIP(ip)
 
 
 def sh(node, cmd):
@@ -143,7 +162,7 @@ def configure(nodes, access_bw, core_bw, core_delay):
     sh(nodes['r2'], 'ip route replace default via 10.0.20.1')
 
     info('*** Verificação dos sysctls (definidos na criação dos contentores)\n')
-    for name in DATA_INTFS:
+    for name in ('vnf_fw', 'vnf_cls', 'vnf_tc', 'r1', 'r2'):
         fwd = nodes[name].cmd('cat /proc/sys/net/ipv4/ip_forward').strip()
         rpf = nodes[name].cmd('cat /proc/sys/net/ipv4/conf/all/rp_filter').strip()
         if fwd != '1' or rpf != '0':
@@ -202,11 +221,14 @@ def main():
     try:
         nodes = build(net)
         net.start()
+        reaplicar_ips(net)
         configure(nodes, args.access_bw, args.core_bw, args.core_delay)
         if args.check:
             rc = 1 if check(nodes) else 0
         else:
-            info('*** Topologia pronta. Noutro terminal: sudo ./trafego/run_cenario.sh misto\n')
+            info('*** Topologia pronta. Noutro terminal:\n'
+                 '      sudo ./vnfs/cadeia.sh up            # ativa as VNFs (com QoS)\n'
+                 '      sudo ./trafego/run_cenario.sh misto comqos\n')
             CLI(net)
     finally:
         net.stop()

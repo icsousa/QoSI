@@ -1,0 +1,25 @@
+#!/usr/sbin/nft -f
+# vnf_cls — modo "scapy": igual ao modo nft, mas os candidatos a VoIP vão
+# para a NFQUEUE 0, onde o marcador.py (Scapy) confirma que são RTP antes de
+# os marcar como EF. "bypass": se o marcador não estiver a correr, os pacotes
+# passam sem marca em vez de serem descartados.
+
+table inet cls
+delete table inet cls
+
+table inet cls {
+    counter ef      { }
+    counter af41    { }
+    counter be      { }
+    counter fila    { }
+
+    chain marcar {
+        type filter hook forward priority mangle; policy accept;
+
+        iifname != "cls-in" return
+
+        udp dport 10000-10099 counter name fila queue num 0 bypass
+        udp dport 5004 ip dscp set af41 counter name af41 accept
+        ip dscp set cs0 counter name be
+    }
+}

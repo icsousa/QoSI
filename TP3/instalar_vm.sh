@@ -5,7 +5,7 @@
 #   ./instalar_vm.sh
 #
 # Instala o Containernet em ~/containernet (com venv, obrigatório desde o
-# Ubuntu 22.04 por causa do setuptools) e constrói a imagem qosi/base.
+# Ubuntu 22.04 por causa do setuptools) e constrói as imagens qosi/base e qosi/mon.
 set -euo pipefail
 
 [ "$(id -u)" -ne 0 ] || { echo "Corre como utilizador normal (o script usa sudo quando precisa)."; exit 1; }
@@ -27,8 +27,13 @@ echo ">> venv do Containernet"
 "$CN/venv/bin/pip" install --upgrade pip
 (cd "$CN" && "$CN/venv/bin/pip" install .)
 
-echo ">> imagem Docker dos nós"
+echo ">> imagens Docker (nós e vnf_mon com Prometheus + Grafana)"
 sudo docker build -t qosi/base:latest "$TP3/docker/"
+sudo docker build -t qosi/mon:latest -f "$TP3/docker/Dockerfile.mon" "$TP3/docker/"
+
+echo ">> módulo NFQUEUE (classificação com Scapy), também nos próximos arranques"
+sudo modprobe nfnetlink_queue
+echo nfnetlink_queue | sudo tee /etc/modules-load.d/qosi.conf >/dev/null
 
 cat <<EOF
 

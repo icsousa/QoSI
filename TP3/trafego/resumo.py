@@ -3,7 +3,11 @@
 Resume os resultados de uma execução de run_cenario.sh num resumo.csv.
 
 Uso: python3 trafego/resumo.py resultados/<pasta>
-     python3 trafego/resumo.py resultados/*      (várias pastas -> resultados/todos.csv)
+     python3 trafego/resumo.py resultados/*                (várias pastas -> resultados/todos.csv)
+     python3 trafego/resumo.py --saida resultados/todos_comqos.csv resultados/*_comqos-r*
+
+Débito UDP = débito que chega ao recetor (enviado x (1 - perdas)); o
+bits_per_second do cliente iperf3 3.9 é a taxa enviada.
 """
 import csv
 import json
@@ -28,9 +32,23 @@ def iperf(path):
                 'retransmissoes': end.get('sum_sent', {}).get('retransmits')}
     s = end.get('sum_received') or end.get('sum', {})                     # UDP
     s = {**end.get('sum', {}), **s}
-    return {'debito_mbps': s.get('bits_per_second', 0) / 1e6,
+    perdas = s.get('lost_percent') or 0
+    return {'debito_mbps': s.get('bits_per_second', 0) / 1e6 * (1 - perdas / 100),
             'jitter_ms': s.get('jitter_ms'),
             'perdas_pct': s.get('lost_percent')}
+
+
+def iperf2_srv(path):
+    """Relatório do servidor iperf2 UDP (intruso). Sem linhas = nada chegou."""
+    try:
+        txt = path.read_text()
+    except OSError:
+        return None
+    m = re.findall(r'([\d.]+) ([KM])bits/sec\s+[\d.]+ ms\s+\d+/\s*\d+ \(([\d.e+-]+)%\)', txt)
+    if not m:
+        return {'debito_mbps': 0.0, 'perdas_pct': 100.0}
+    v, u, perdas = m[-1]
+    return {'debito_mbps': float(v) / (1000 if u == 'K' else 1), 'perdas_pct': float(perdas)}
 
 
 def itgdec(path):
@@ -67,7 +85,7 @@ def resumir(d: Path):
     linhas = []
     fontes = [('voip', itgdec, 'voip_itgdec.txt'), ('voip', iperf, 'voip.json'),
               ('video', iperf, 'video.json'), ('dados', iperf, 'bulk.json'),
-              ('intruso', iperf, 'intruso.json'), ('ping', ping, 'ping.txt')]
+              ('intruso', iperf2_srv, 'intruso_srv.txt'), ('ping', ping, 'ping.txt')]
     vistos = set()
     for fluxo, fn, nome in fontes:
         if fluxo in vistos:
@@ -92,7 +110,11 @@ def escrever(path, linhas):
 
 
 def main():
-    pastas = [Path(p) for p in sys.argv[1:] if Path(p).is_dir()]
+    args = sys.argv[1:]
+    saida = None
+    if args[:1] == ['--saida'] and len(args) > 1:
+        saida, args = Path(args[1]), args[2:]
+    pastas = [Path(p) for p in args if Path(p).is_dir()]
     if not pastas:
         sys.exit(__doc__)
     todas = []
@@ -102,9 +124,10 @@ def main():
         todas += linhas
         for l in linhas:
             print('  ' + '  '.join(f'{k}={v}' for k, v in l.items() if v is not None and k != 'execucao'))
-    if len(pastas) > 1:
-        escrever(pastas[0].parent / 'todos.csv', todas)
-        print(f'>> {len(todas)} linhas em {pastas[0].parent / "todos.csv"}')
+    if len(pastas) > 1 or saida:
+        saida = saida or pastas[0].parent / 'todos.csv'
+        escrever(saida, todas)
+        print(f'>> {len(todas)} linhas em {saida}')
 
 
 if __name__ == '__main__':

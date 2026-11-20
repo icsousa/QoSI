@@ -1,0 +1,22 @@
+# Imagem da vnf_mon: a imagem base + Prometheus + Grafana.
+# Construir (depois da qosi/base):
+#   sudo docker build -t qosi/mon:latest -f docker/Dockerfile.mon docker/
+FROM qosi/base:latest
+
+ARG PROM_VERSION=2.53.2
+ARG GRAFANA_VERSION=11.2.0
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        ca-certificates adduser libfontconfig1 musl \
+    && ARCH=$(dpkg --print-architecture) \
+    && curl -fsSL -o /tmp/prom.tgz \
+       "https://github.com/prometheus/prometheus/releases/download/v${PROM_VERSION}/prometheus-${PROM_VERSION}.linux-${ARCH}.tar.gz" \
+    && tar -xzf /tmp/prom.tgz -C /opt \
+    && mv /opt/prometheus-${PROM_VERSION}.linux-${ARCH} /opt/prometheus \
+    && curl -fsSL -o /tmp/grafana.deb \
+       "https://dl.grafana.com/oss/release/grafana_${GRAFANA_VERSION}_${ARCH}.deb" \
+    && apt-get install -y --no-install-recommends /tmp/grafana.deb \
+    && rm -rf /tmp/prom.tgz /tmp/grafana.deb /var/lib/apt/lists/*
+
+WORKDIR /tp3
+CMD ["/bin/bash"]

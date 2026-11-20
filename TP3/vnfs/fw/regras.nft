@@ -1,0 +1,54 @@
+#!/usr/sbin/nft -f
+# vnf_fw — controlo de acesso: lista branca com estado (nftables).
+#
+# Só passa tráfego da LAN de clientes para a LAN de servidores que esteja
+# na lista abaixo (IP de origem + IP de destino + porta), ICMP dos clientes
+# legítimos e respostas a ligações já aceites. Tudo o resto é descartado e
+# contado. O h_intruso está na mesma LAN que os clientes: é a combinação
+# IP de origem + porta que o bloqueia (só a porta não chegava).
+
+table inet fw
+delete table inet fw
+
+table inet fw {
+    # Um contador por regra, lidos pelo exporter (nft -j list counters)
+    counter voip       { }
+    counter video      { }
+    counter dados      { }
+    counter ping       { }
+    counter respostas  { }
+    counter bloqueado  { }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+
+        ct state established,related counter name respostas accept
+        ct state invalid counter name bloqueado drop
+
+        iifname "fw-lan" jump lista_branca
+
+        # Não veio da LAN (p. ex. servidor a abrir ligação para um cliente)
+        counter name bloqueado drop
+    }
+
+    chain lista_branca {
+        # VoIP: RTP (UDP 10000-10099) + sinalização D-ITG (TCP 9000)
+        #       + controlo do iperf3 quando não há D-ITG (TCP 10000)
+        ip saddr 10.0.1.11 ip daddr 10.0.2.11 udp dport 10000-10099 counter name voip accept
+        ip saddr 10.0.1.11 ip daddr 10.0.2.11 tcp dport { 9000, 10000 } counter name voip accept
+
+        # Vídeo: dados UDP 5004 + controlo do iperf3 em TCP 5004
+        ip saddr 10.0.1.12 ip daddr 10.0.2.12 udp dport 5004 counter name video accept
+        ip saddr 10.0.1.12 ip daddr 10.0.2.12 tcp dport 5004 counter name video accept
+
+        # Dados (best effort): TCP 5201
+        ip saddr 10.0.1.13 ip daddr 10.0.2.13 tcp dport 5201 counter name dados accept
+
+        # ping dos três clientes legítimos
+        ip saddr { 10.0.1.11, 10.0.1.12, 10.0.1.13 } ip daddr 10.0.2.0/24 \
+            icmp type echo-request counter name ping accept
+
+        # Tudo o resto (incluindo o h_intruso) cai aqui
+        counter name bloqueado drop
+    }
+}

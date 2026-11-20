@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: qosi
+    folder: ''
+    type: file
+    options:
+      path: /tp3/vnfs/mon/grafana/dashboards

@@ -6,7 +6,7 @@
 #   mistura   base       VoIP + ping, sem carga                    (E0)
 #             misto      VoIP + vídeo + dados                      (E1/E2/E5)
 #             ataque     misto + intruso (UDP 20 Mbit/s + scan)    (E4)
-#             degradado  misto com netem no núcleo                 (E3)
+#             degradado  misto com netem no núcleo, nos dois sentidos (E3)
 #   etiqueta  estado da cadeia, só para nomear resultados (ex.: semqos, comqos, htb-w532)
 #   duracao_s duração dos fluxos medidos (omissão: 60)
 #
@@ -34,12 +34,24 @@ docker inspect mn.h_voip >/dev/null 2>&1 || { echo "A topologia não está a cor
 HAS_DITG=0
 dx h_voip 'command -v ITGSend' >/dev/null 2>&1 && HAS_DITG=1
 
+# Parâmetros atuais do netem do núcleo (os do --core-delay/--core-bw do topologia.py),
+# para o cenário "degradado" os repor no fim em vez de assumir 10 ms / 100 Mbit/s.
+netem_atual() {   # netem_atual <nó> <intf> -> "delay X rate Y"
+  dx "$1" "tc qdisc show dev $2" | sed -n 's/.*delay \([^ ]*\).*rate \([^ ]*\).*/delay \1 rate \2/p' | head -1
+}
+NUCLEO=( "r1 r1-core" "r2 r2-core" )
+declare -A NETEM_ORIG=()
+for par in "${NUCLEO[@]}"; do set -- $par; NETEM_ORIG[$1]=$(netem_atual "$1" "$2"); done
+
 limpar() {
   for n in srv_voip srv_video srv_bulk h_voip h_video h_bulk h_intruso; do
-    docker exec "mn.$n" pkill -f 'iperf3|ITGRecv|ITGSend' 2>/dev/null || true
+    docker exec "mn.$n" pkill -f 'iperf|ITGRecv|ITGSend' 2>/dev/null || true
   done
   if [ "$MIX" = degradado ]; then
-    dx r1 'tc qdisc change dev r1-core root netem delay 10ms rate 100mbit limit 10000' || true
+    for par in "${NUCLEO[@]}"; do
+      set -- $par
+      dx "$1" "tc qdisc change dev $2 root netem ${NETEM_ORIG[$1]} limit 10000" || true
+    done
   fi
 }
 trap limpar EXIT
@@ -50,12 +62,19 @@ trap limpar EXIT
   echo "inicio=$(date -Iseconds)"; echo "ditg=$HAS_DITG"
   echo "--- vnf_tc tc-out (antes)"; dx vnf_tc 'tc -s qdisc show dev tc-out'
   echo "--- vnf_fw nftables (antes)"; dx vnf_fw 'nft list ruleset 2>/dev/null || true'
+  echo "--- vnf_cls nftables (antes)"; dx vnf_cls 'nft list ruleset 2>/dev/null || true'
+  echo "--- vnf_tc config"; dx vnf_tc 'cat /tmp/vnf_tc.conf 2>/dev/null || echo sem QoS'
+  echo "--- núcleo"; for par in "${NUCLEO[@]}"; do set -- $par; echo "$1: ${NETEM_ORIG[$1]}"; done
 } > "$OUT/meta.txt"
 
 # ---------------------------------------------------------------- degradação
 if [ "$MIX" = degradado ]; then
-  echo ">> netem no núcleo: perdas 1 %, atraso 50 ± 10 ms"
-  dx r1 'tc qdisc change dev r1-core root netem delay 50ms 10ms distribution normal loss 1% rate 100mbit limit 10000'
+  echo ">> netem no núcleo (dois sentidos): perdas 1 %, atraso 50 ± 10 ms"
+  for par in "${NUCLEO[@]}"; do
+    set -- $par
+    rate=$(sed -n 's/.*rate \(.*\)/\1/p' <<< "${NETEM_ORIG[$1]}")
+    dx "$1" "tc qdisc change dev $2 root netem delay 50ms 10ms distribution normal loss 1% rate ${rate:-100mbit} limit 10000"
+  done
 fi
 
 # ---------------------------------------------------------------- servidores
@@ -67,7 +86,9 @@ else
 fi
 dxd srv_video "iperf3 -s -p 5004"
 dxd srv_bulk  "iperf3 -s -p 5201"
-dxd srv_bulk  "iperf3 -s -p 5202"
+if [ "$MIX" = ataque ]; then   # iperf2: recetor do intruso (mede o que passa a firewall)
+  dxd srv_bulk "iperf -s -u -p 5202 -i 1 > $OUT_CT/intruso_srv.txt 2>&1"
+fi
 sleep 2
 
 PIDS=()
@@ -102,15 +123,18 @@ fi
 
 # ---------------------------------------------------------------- intruso
 if [ "$MIX" = ataque ]; then
+  # iperf (v2) em UDP não tem ligação de controlo: envia mesmo com a firewall
+  # a bloquear, que é o que se quer medir. O nmap distingue "closed" (sem
+  # firewall, o servidor responde RST) de "filtered" (descartado na vnf_fw).
   echo ">> intruso: UDP 20 Mbit/s + varrimento de portas"
-  docker exec mn.h_intruso iperf3 -c $SRV_BULK -p 5202 -u -b 20M -t $DUR -J > "$OUT/intruso.json" 2>&1 &
+  docker exec mn.h_intruso iperf -c $SRV_BULK -u -p 5202 -b 20M -t $DUR > "$OUT/intruso_cli.txt" 2>&1 &
   PIDS+=($!)
-  dx h_intruso "for p in \$(seq 20 30); do nc -z -w1 $SRV_VOIP \$p && echo \"\$p aberta\" || echo \"\$p fechada/filtrada\"; done" \
-      > "$OUT/intruso_scan.txt" 2>&1 || true
+  dx h_intruso "nmap -Pn -sT -p 20-30 --max-retries 1 $SRV_VOIP" > "$OUT/intruso_scan.txt" 2>&1 || true
 fi
 
 echo ">> à espera dos fluxos..."
 for p in "${PIDS[@]}"; do wait "$p" || true; done
+docker exec mn.srv_bulk pkill -INT -f 'iperf -s' 2>/dev/null || true   # fecha o relatório do iperf2
 
 # ---------------------------------------------------------------- recolha
 if [ $HAS_DITG = 1 ]; then
@@ -121,7 +145,9 @@ if [ $HAS_DITG = 1 ]; then
 fi
 {
   echo "--- vnf_tc tc-out (depois)"; dx vnf_tc 'tc -s qdisc show dev tc-out; tc -s class show dev tc-out'
+  echo "--- vnf_tc policiamento (depois)"; dx vnf_tc 'tc -s filter show dev tc-in ingress 2>/dev/null'
   echo "--- vnf_fw nftables (depois)"; dx vnf_fw 'nft list ruleset 2>/dev/null || true'
+  echo "--- vnf_cls nftables (depois)"; dx vnf_cls 'nft list ruleset 2>/dev/null || true'
   echo "fim=$(date -Iseconds)"
 } >> "$OUT/meta.txt"
 

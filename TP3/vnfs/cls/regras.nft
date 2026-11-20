@@ -1,0 +1,28 @@
+#!/usr/sbin/nft -f
+# vnf_cls — classificação e marcação DSCP (modo "nft", caminho rápido).
+#
+#   VoIP   UDP 10000-10099 e pacote < 300 B  -> EF   (46)
+#   Vídeo  UDP 5004                          -> AF41 (34)
+#   Resto                                    -> BE   (0), apaga marcas vindas do cliente
+#
+# Só se marca o sentido cliente -> servidor (entra por cls-in): é aí que a
+# vnf_tc agenda. As respostas passam sem alterações.
+
+table inet cls
+delete table inet cls
+
+table inet cls {
+    counter ef      { }
+    counter af41    { }
+    counter be      { }
+
+    chain marcar {
+        type filter hook forward priority mangle; policy accept;
+
+        iifname != "cls-in" return
+
+        udp dport 10000-10099 meta length < 300 ip dscp set ef counter name ef accept
+        udp dport 5004 ip dscp set af41 counter name af41 accept
+        ip dscp set cs0 counter name be
+    }
+}

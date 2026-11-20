@@ -4,10 +4,12 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# iperf (versão 2) gera o UDP do intruso sem ligação de controlo TCP;
+# nmap distingue porta fechada (RST) de filtrada (sem resposta) no varrimento.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         iproute2 iputils-ping net-tools ethtool tcpdump procps \
         nftables iptables \
-        iperf3 netcat-openbsd curl \
+        iperf3 iperf netcat-openbsd nmap curl \
         python3 python3-pip python3-scapy \
     && rm -rf /var/lib/apt/lists/*
 
@@ -17,12 +19,16 @@ RUN apt-get update \
         || echo "AVISO: d-itg indisponível; VoIP será gerado com iperf3") \
     && rm -rf /var/lib/apt/lists/*
 
-# Usado pela VNF de classificação na fase 2 (Scapy + NFQUEUE)
+# Usado pela VNF de classificação (Scapy + NFQUEUE)
 RUN apt-get update && apt-get install -y --no-install-recommends \
         libnetfilter-queue-dev build-essential python3-dev \
     && pip3 install --no-cache-dir NetfilterQueue \
     && apt-get purge -y build-essential python3-dev \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+# O bash 5.1 (Ubuntu 22.04) liga o "bracketed paste" e mete sequências
+# \e[?2004h/l no output de node.cmd(), o que estraga comparações de texto.
+RUN echo "set enable-bracketed-paste off" >> /etc/inputrc
 
 WORKDIR /tp3
 CMD ["/bin/bash"]

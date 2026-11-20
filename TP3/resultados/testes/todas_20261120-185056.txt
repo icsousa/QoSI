@@ -1,0 +1,81 @@
+### vnf_fw — controlo de acesso
+vnf_fw: lista branca ativa (policy drop)
+exporter em http://10.0.100.2:9101/metrics
+  [OK]     h_voip ping srv_voip passa
+  [OK]     h_intruso ping srv_voip é bloqueado
+  [OK]     h_bulk TCP 5201 passa
+  [OK]     h_bulk TCP 6000 (porta fora da lista) é bloqueado
+  [OK]     h_intruso TCP 5201 (IP fora da lista) é bloqueado
+  [OK]     h_video UDP 5004 passa
+  [OK]     UDP 20 Mbit/s do intruso não chega ao servidor
+  [OK]     varrimento de portas: todas 'filtered'
+  contador 'bloqueado': 0 -> 5585 (+5585 pacotes)
+  [OK]     contador de bloqueados subiu
+### vnf_cls — classificação DSCP (modo nft)
+vnf_cls: marcação DSCP ativa (modo nft)
+exporter em http://10.0.100.3:9101/metrics
+  VoIP UDP 10000, 160 B  -> tos 0xb8
+  [OK]     VoIP pequeno marcado EF (0xb8)
+  UDP 10000, 1000 B      -> tos 0x0
+  [OK]     pacote grande na porta VoIP fica BE (0x0)
+  Vídeo UDP 5004         -> tos 0x88
+  [OK]     vídeo marcado AF41 (0x88)
+  TCP 5201 com tos 0xb8  -> tos 0x0
+  [OK]     marca do cliente apagada no best effort (0x0)
+	counter ef {
+		packets 102 bytes 18864
+	counter af41 {
+		packets 191 bytes 255392
+	counter be {
+		packets 2130 bytes 2974526
+### vnf_cls — classificação DSCP (modo scapy)
+vnf_cls: marcação DSCP ativa (modo scapy)
+exporter em http://10.0.100.3:9101/metrics
+  D-ITG G.711 (50 pps)   -> tos 0xb8
+  [OK]     fluxo com perfil de voz marcado EF (0xb8)
+  RTP v2 isolado (Scapy) -> tos 0xb8
+  [OK]     pacote com cabeçalho RTP marcado EF (0xb8)
+  UDP 10000 a 780 pps    -> tos 0x0
+  [OK]     UDP pequeno sem perfil de voz fica BE (0x0)
+{"rtp_ef": 3, "perfil_ef": 96, "nao_voz": 1518, "proc_ns": 932243255}
+  Vídeo UDP 5004         -> tos 0x88
+  [OK]     vídeo marcado AF41 (0x88)
+  TCP 5201 com tos 0xb8  -> tos 0x0
+  [OK]     marca do cliente apagada no best effort (0x0)
+	counter ef {
+		packets 0 bytes 0
+	counter af41 {
+		packets 191 bytes 255392
+	counter be {
+		packets 1885 bytes 2734773
+	counter fila {
+		packets 1663 bytes 313688
+### vnf_tc — policiamento e agendamento (HTB)
+vnf_tc: modo=htb total=9.5 ef_rate=1 ef_burst=10k video=5/9 be=2/9.5
+exporter em http://10.0.100.4:9101/metrics
+  TCP sozinho (BE): 8.99 Mbit/s
+  [OK]     BE sozinho usa a capacidade do limitador (8,5-9,6 Mbit/s)
+  EF a 3 Mbit/s: chegam 0.86 Mbit/s
+  [OK]     policiamento EF limita a ~1 Mbit/s (0,8-1,2)
+  AF41 4 Mbit/s com BE saturado: chegam 4.0 Mbit/s
+  [OK]     vídeo mantém ~4 Mbit/s com congestionamento (>= 3,9)
+class htb 1:10 parent 1:1 leaf 10: prio 0 rate 1Mbit ceil 1500Kbit burst 1600b cburst 1600b 
+ Sent 682356 bytes 3378 pkt (dropped 0, overlimits 158 requeues 0) 
+ backlog 0b 0p requeues 0
+--
+class htb 1:20 parent 1:1 leaf 20: prio 1 rate 5Mbit ceil 9Mbit burst 1600b cburst 1600b 
+ Sent 4128320 bytes 3040 pkt (dropped 0, overlimits 3 requeues 0) 
+ backlog 0b 0p requeues 0
+--
+class htb 1:30 parent 1:1 leaf 30: prio 2 rate 2Mbit ceil 9500Kbit burst 1600b cburst 1600b 
+ Sent 19882510 bytes 13217 pkt (dropped 0, overlimits 10149 requeues 0) 
+ backlog 0b 0p requeues 0
+	action order 1:  police 0x1 rate 1Mbit burst 10Kb mtu 2Kb action drop overhead 0b 
+	Sent 2202796 bytes 11717 pkt (dropped 8339, overlimits 8339 requeues 0) 
+### vnf_mon — Prometheus + Grafana
+vnf_mon: Prometheus :9090 e Grafana :3000 ativos
+  alvos 'up' no Prometheus: 3/3
+  [OK]     Prometheus recolhe as 3 sondas
+  [OK]     métrica de CPU disponível para as 3 VNFs (3)
+  [OK]     Grafana com o dashboard 'QoSI TP3' provisionado
+=== 24 passaram, 0 falharam
