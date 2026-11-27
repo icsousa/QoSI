@@ -30,8 +30,8 @@
 \begin{document}
 \title{TP4 -- Estudo de QoS e Mecanismos de Controlo de Tráfego\\com o NS-2}
 \titlerunning{TP4 -- QoS e Controlo de Tráfego}
-\author{Nome Aluno 1 (A00000) \and Nome Aluno 2 (A00000) \and Nome Aluno 3 (A00000)}
-\authorrunning{Grupo XX}
+\author{João Carlos Teixeira Neiva (PG63978) \and João Afonso Almeida Sousa (PG62405) \and Ivo Costa Sousa (PG63976)}
+\authorrunning{Grupo 06}
 \institute{Qualidade de Serviço na Internet, Universidade do Minho\\Ano letivo 2026/2027}
 \maketitle
 
@@ -70,6 +70,27 @@ Simulador: NS-2.35 (pacote \texttt{ns2} do Ubuntu 20.04).
 Os fluxos são identificados pelo par \texttt{nó.porta} de origem e de destino (por exemplo,
 \texttt{0.0\_8.0} = Cli1$\rightarrow$Cli6). Como a topologia é simétrica, a análise centra-se
 no sentido E1$\rightarrow$C0$\rightarrow$E2.
+
+\subsection{Trabalho introdutório -- validação do simulador}
+Antes dos cenários do enunciado, validou-se a instalação do NS-2 com o exemplo
+\texttt{ns-simple.tcl} (\url{http://nile.wpi.edu/NS/simple_ns.html}). Nesse exemplo há quatro
+nós: n0 e n1 ligam-se a n2 a 2~Mbps, e n2 liga-se a n3 a 1,7~Mbps, com uma fila de 10 pacotes.
+Há um FTP/TCP de n0 para n3 (entre 1 e 4~s) e um CBR/UDP de 1~Mbps de n1 para n3 (entre 0,1 e
+4,5~s). Como o NAM não estava disponível, retirou-se do \texttt{finish} a chamada
+\texttt{exec nam} e acrescentou-se \texttt{trace-all} para obter um trace.
+
+A simulação correu sem erros e os resultados são os esperados:
+\begin{itemize}
+\item o simulador imprime \texttt{packet\_size = 1000} e \texttt{interval = 0,008~s} para o
+CBR, ou seja, exatamente 1~Mbps;
+\item o CBR recebe \esp{0,99~Mbps} em n3, e o TCP fica com a capacidade sobrante,
+\esp{0,65~Mbps} em média entre 1 e 4~s;
+\item com os dois fluxos ativos, o link n2$\rightarrow$n3 transporta \esp{1,61~Mbps}
+($\approx$95\% de 1,7~Mbps);
+\item há \esp{18 descartes} na fila de n2 (10 TCP e 8 CBR). O primeiro acontece a
+\esp{1,34~s}, quando o slow-start do TCP enche a fila de 10 pacotes.
+\end{itemize}
+Isto confirma que o simulador, os agentes TCP/UDP e o trace funcionam corretamente.
 
 %=====================================================================
 \section{Cenário 1 -- Best-Effort}
@@ -265,10 +286,10 @@ A Fig.~\ref{fig:c3} mostra as perdas e o débito no cenário DiffServ.
 \scriptsize\begin{tabular}{lcccc}\toprule
  & \multicolumn{2}{c}{Best-Effort (DropTail / RED)} & \multicolumn{2}{c}{DiffServ (qos1)}\\
 Fluxo & Débito & Perdas & Débito & Perdas\\\midrule
-Cli1$\rightarrow$Cli6 & \esp{2,95 / 1,75} & \esp{0,00 / 150,00} & \esp{2,38} & \esp{69,87}\\
+Cli1$\rightarrow$Cli6 & \esp{2,95 / 1,75} & \esp{0,00 / 150,00} & \esp{2,38} & \esp{69,93}\\
 Cli2$\rightarrow$Cli5 & \esp{1,97 / 1,74} & \esp{124,20 / 152,80} & \esp{1,32} & \esp{207,73}\\
 Cli3$\rightarrow$Cli4 & \esp{0,02 / 1,38} & \esp{372,73 / 196,80} & \esp{1,20} & \esp{221,33}\\
-Total & \esp{4,94 / 4,87} & \esp{496,93 / 499,60} & \esp{4,90} & \esp{498,93}\\\bottomrule
+Total & \esp{4,94 / 4,87} & \esp{496,87 / 499,60} & \esp{4,90} & \esp{498,93}\\\bottomrule
 \end{tabular}\end{table}
 
 Comparando com o Best-Effort (Tabela~\ref{tab:c3}):
@@ -340,7 +361,7 @@ Para avaliar a solução, os três clientes têm o mesmo contrato mas comportame
 \item Cli2$\rightarrow$Cli5 envia CBR a 3~Mbps a partir de 5~s;
 \item Cli3$\rightarrow$Cli4, um cliente ``agressivo'', envia CBR a 4,5~Mbps a partir de 10~s.
 \end{itemize}
-O mesmo tráfego foi simulado em Best-Effort/DropTail (\texttt{qosC4.tcl be}) e com uma
+O mesmo tráfego foi simulado em Best-Effort com DropTail (\texttt{qosC4.tcl be}) e com uma
 variante AF clássica de uma só fila com RIO-C e duas precedências (\texttt{qosC4.tcl rio}).
 
 \subsection{Resultados}
@@ -368,7 +389,8 @@ Best-Effort (DropTail) & \esp{2,99} & \esp{2,95} & \esp{2,04} & \esp{1,57} & \es
 \item \textbf{Utilização da capacidade sobrante}: sozinho, Cli1 usa \esp{2,99~Mbps}, o dobro do
 garantido, porque a capacidade não usada está disponível. Com dois clientes ativos, cada um
 fica com \esp{2,50 e 2,49~Mbps}. A garantia é um mínimo, não um limite.
-\item \textbf{Garantia sob congestão}: com os três clientes ativos, a oferta é de 10,5~Mbps.
+\item \textbf{Garantia sob congestão}: com os três clientes ativos, a oferta total é de
+10,5~Mbps.
 \begin{itemize}
 \item Os 4,5~Mbps conformes passam sem perdas (fila 0).
 \item Os 6~Mbps de excesso disputam os 0,5~Mbps restantes na fila 1 e são repartidos em

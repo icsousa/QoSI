@@ -18,5 +18,5 @@ TP4 QoS - como usar (na VM com NS-2)
    bw_link.awk = bw.awk com link/prefixo parametrizaveis (-v s=5 -v d=4 -v outf=bwE2)
 
 3) Relatorio: relatorio.tex (classe llncs - compila no Overleaf com o template LNCS).
-   Colocar a pasta results/ ao lado do .tex. Os valores a AZUL sao previsoes
-   analiticas: confirmar/substituir com summary.txt e stats.txt e depois remover a cor.
+   Colocar a pasta results/ ao lado do .tex. Todos os valores do relatorio foram
+   medidos nas simulacoes (summary.txt, stats.txt e contagem direta nos traces).
